@@ -1,0 +1,2755 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FD Editor Workflow Timer & Notes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+body {font-family: 'Inter', sans-serif; background-color: #f7f9fb;}
+/* TIMER DISPLAY */
+.timer-display {font-size: 2.25rem; font-weight: 700; letter-spacing: -0.05em; color: #1e40af; transition: color 0.3s ease;}
+.timer-display.overdue {color: #ef4444;}
+.beep-active {animation:flash .5s infinite alternate;}
+@keyframes flash {from{background:#fca5a5;} to{background:#fef2f2;}}
+/* TARGET CHIPS */
+.target-chip {
+display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem;
+font-weight: 700; margin-top: 0.25rem; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db;
+}
+.target-chip.overall {background: #dbeafe; color: #1e40af; border-color: #93c5fd;}
+.target-chip.fr {background: #fef3c7; color: #d97706; border-color: #fbbf24;}
+.target-chip.sv {background: #ecfccb; color: #65a30d; border-color: #a3e635;}
+/* ⭐⭐⭐   NEW AIERA TARGET CHIP STYLES   ⭐⭐⭐   */
+.target-chip.aiera-total {background: #fbcfe8; color: #be185d; border-color: #f472b6;}
+.target-chip.aiera-svhp {background: #e9d5ff; color: #7c3aed; border-color: #a78bfa;}
+/* WORKFLOW BUTTONS */
+.workflow-btn {
+padding: .75rem; border-radius: 9999px; box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+transition: all .3s ease-in-out; font-weight: 800; font-size: 1.125rem; color: white; text-align: center;
+letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: center; justify-content: center;
+border: none; white-space: nowrap; cursor: pointer;
+}
+.btn-active-red {background-image: linear-gradient(to right,#f87171,#ef4444); box-shadow: 0 10px 15px -3px rgba(239,68,68,.7); border: 3px solid #fca5a5;}
+.btn-completed-dark {background-color:#374151 !important; color:#9ca3af !important; box-shadow:none !important; cursor:not-allowed;}
+.workflow-btn:enabled, .workflow-btn.btn-fr-started:enabled {background-image: linear-gradient(to right,#60a5fa,#3b82f6); box-shadow: 0 10px 15px -3px rgba(96,165,250,.5);}
+.workflow-btn.btn-sv-started:enabled {background-image: linear-gradient(to right,#38bdf8,#0ea5e9); box-shadow: 0 10px 15px -3px rgba(56,189,248,.5);}
+.workflow-btn.btn-sv-ended:enabled {background-image: linear-gradient(to right,#1d4ed8,#1e40af); box-shadow: 0 10px 15px -3px rgba(30,64,175,.5);}
+/* ⭐⭐⭐   NEW AIERA COLORS   ⭐⭐⭐   */
+.workflow-btn.btn-aiera-started:enabled {background-image: linear-gradient(to right,#f472b6,#ec4899); box-shadow: 0 10px 15px -3px rgba(236,72,153,.5);}
+.workflow-btn.btn-aiera-svhp-started:enabled {background-image: linear-gradient(to right,#a78bfa,#8b5cf6); box-shadow: 0 10px 15px -3px rgba(139,92,246,.5);}
+.workflow-btn.btn-aiera-svhp-ended:enabled {background-image: linear-gradient(to right,#7c3aed,#6d28d9); box-shadow: 0 10px 15px -3px rgba(109,40,217,.5);}
+.workflow-btn:disabled {background-color:#e5e7eb; color:#9ca3af; cursor:not-allowed; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,.06); border:none;}
+/* Small font for new workflow buttons */
+.workflow-btn.btn-sm-text {font-size: 0.95rem; letter-spacing: .05em;}
+/* RESET BUTTON */
+#btn-log-another {
+background-color: #fee2e2 !important; color: #dc2626 !important; border: 2px solid #fecaca !important;
+box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06) !important;
+}
+#btn-log-another:hover:enabled {background-color: #fecaca !important; transform: translateY(-1px);}
+#btn-log-another:active:enabled {transform: translateY(0);}
+/* FULL-WIDTH TOGGLE PILL */
+.toggle-capsule {
+display: flex; width: 100%; background: #e5e7eb; border-radius: 9999px; padding: 0.25rem;
+box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
+}
+.toggle-capsule button {
+flex: 1; padding: 0.75rem 1.5rem; border-radius: 9999px; font-size: 1rem; font-weight: 600;
+transition: all 0.2s ease; text-align: center;
+}
+.toggle-capsule button.active {
+background: #3b82f6; color: white; box-shadow: 0 1px 3px 0 rgba(0,0,0,.1);
+}
+.toggle-capsule button:not(.active) {
+color: #4b5563; background: transparent;
+}
+.toggle-capsule button:not(.active):hover {
+color: #1f2937; background: #f3f4f6;
+}
+/* AESTHETIC LOGS*/
+/* ADD THIS TO YOUR EXISTING <style> BLOCK */
+.month-group-title {
+font-size: 1rem;
+font-weight: 800; /* Bolder than the other elements in the summary */
+color: #111827; /* Near black color */
+text-transform: uppercase; /* Makes the month text uppercase */
+}
+.stat-green {
+color: #10b981; /* Green-500 equivalent */
+font-weight: 500; /* Not bold */
+}
+.stat-blue {
+color: #3b82f6; /* Blue-500 equivalent */
+font-weight: 500; /* Not bold */
+}
+.stat-pink {
+color: #ec4899; /* Pink-500 equivalent */
+font-weight: 500; /* Not bold */
+}
+/* NOTES */
+#notesArea::-webkit-scrollbar{width:8px;}
+#notesArea::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:4px;}
+#notesArea:hover::-webkit-scrollbar-thumb{background:#9ca3af;}
+#notesArea{resize:vertical; height:100%; min-height:100px;}
+.notes-panel{display:flex; flex-direction:column; min-height:300px;}
+/* DELETE & EDIT */
+.delete-btn,.edit-btn{@apply p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition;}
+.edit-btn{background-color:#dbeafe !important; color:#1e40af !important;}
+.edit-btn:hover{background-color:#bfdbfe !important;}
+/* GORGEOUS TOASTS */
+.toast-container {
+position: relative;
+width: 100%;
+}
+.toast {
+display: flex; align-items: center; gap: 0.75rem;
+padding: 0.75rem 1rem; margin-bottom: 0.5rem;
+border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem;
+color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+animation: slideIn 0.4s ease-out, fadeOut 0.5s 2.5s forwards;
+transform: translateX(-100%);
+opacity: 0;
+}
+.toast.success {
+background: linear-gradient(135deg, #10b981, #059669);
+border-left: 4px solid #34d399;
+}
+.toast.error {
+background: linear-gradient(135deg, #ef4444, #dc2626);
+border-left: 4px solid #f87171;
+}
+.toast i {
+width: 1.25rem; height: 1.25rem;
+}
+@keyframes slideIn {
+to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+to { opacity: 0; transform: translateY(-10px); }
+}
+/* 🚀     LOG GROUPING */
+/* MONTH GROUP */
+.month-group-details {
+background: transparent;
+border: none;
+margin-bottom: 1rem;
+}
+.month-group-summary {
+padding: 0.5rem 0.75rem;
+font-size: 1rem; /* Larger */
+font-weight: 800; /* Bolder */
+color: #111827; /* gray-900 */
+cursor: pointer;
+list-style: none;
+display: flex;
+align-items: center;
+justify-content: space-between;
+border-bottom: 2px solid #3b82f6; /* blue-500 */
+margin-bottom: 1rem;
+}
+.month-group-summary::-webkit-details-marker { display: none; }
+.month-group-summary .group-icon {
+transition: transform 0.2s ease;
+color: #3b82f6; /* blue-500 */
+}
+.month-group-details[open] > .month-group-summary .group-icon {
+transform: rotate(90deg);
+}
+/* DATE GROUP */
+.log-group-details {
+background: #fff;
+border-radius: 0.75rem;
+border: 1px solid #e5e7eb;
+box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+margin-bottom: 0.75rem;
+}
+.log-group-details[open] {
+box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.05);
+}
+.log-group-summary {
+padding: 1rem 1.25rem;
+font-size: 1rem;
+font-weight: 700;
+color: #1e40af; /* blue-800 */
+cursor: pointer;
+list-style: none; /* Remove default triangle */
+display: flex;
+align-items: center;
+justify-content: space-between;
+border-bottom: none; /* Reset border */
+margin-bottom: 0; /* Reset margin */
+}
+.log-group-summary::-webkit-details-marker { display: none; }
+.log-group-summary .group-icon {
+transition: transform 0.2s ease;
+color: #6b7280; /* gray-500 */
+}
+.log-group-details[open] > .log-group-summary .group-icon {
+transform: rotate(90deg);
+}
+.log-item {
+/* This is the individual log grid */
+border-top: 1px solid #f3f4f6; /* gray-100 */
+}
+.log-group-content .log-item:first-child {
+border-top: 1px solid #e5e7eb; /* gray-200 */
+}
+/* 🚀     MANUAL LOG MODAL */
+.modal-overlay {
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.6);
+display: flex; align-items: center; justify-content: center;
+z-index: 50; opacity: 0;
+transition: opacity 0.2s ease;
+pointer-events: none;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+background: white; border-radius: 0.75rem;
+padding: 1.5rem; width: 100%; max-width: 32rem;
+box-shadow: 0 10px 15px -3px rgba(0,0,0,.1);
+transform: scale(0.95); transition: all 0.2s ease;
+}
+.modal-overlay.open .modal-box { transform: scale(1); }
+.modal-box h3 {
+font-size: 1.25rem; font-weight: 700;
+color: #1f2937; margin-bottom: 0.5rem;
+}
+.modal-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-span { grid-column: 1 / -1; }
+.form-group label {
+font-size: 0.875rem; font-weight: 600;
+color: #374151; margin-bottom: 0.25rem;
+}
+.form-group input, .form-group select {
+padding: 0.5rem 0.75rem; border: 1px solid #d1d5db;
+border-radius: 0.5rem;
+font-size: 1rem;
+}
+.form-group input:disabled, .form-group select:disabled {
+background: #f3f4f6;
+color: #9ca3af;
+cursor: not-allowed;
+}
+/* 🚀     SPEAKER DATABASE */
+.speaker-db summary {
+font-size: 1.125rem; font-weight: 700;
+color: #ca8a04; /* yellow-600 */
+cursor: pointer; list-style: none;
+display: flex; align-items: center; gap: 0.5rem;
+}
+.speaker-db summary::-webkit-details-marker { display: none; }
+.speaker-db summary .group-icon {
+transition: transform 0.2s ease;
+color: #eab308; /* yellow-500 */
+}
+.speaker-db[open] > summary .group-icon {
+transform: rotate(90deg);
+}
+.speaker-item {
+display: flex; justify-content: space-between; align-items: center;
+padding: 0.25rem; background: #fefce8; /* yellow-50 */
+border-radius: 0.5rem; border: 1px solid #fde68a; /* yellow-200 */
+margin-bottom: 0.25rem;
+}
+.speaker-item span {
+font-family: monospace; font-size: 0.700rem;
+color: #713f12; /* yellow-800 */
+word-break: break-all;
+padding-right: 1rem;
+}
+.speaker-item .btn-group { display: flex; gap: 0.5rem; }
+.speaker-btn {
+padding: 0.375rem; border-radius: 9999px;
+background: #fde68a; /* yellow-200 */
+color: #a16207; /* yellow-700 */
+transition: all 0.2s ease;
+}
+.speaker-btn:hover { background: #facc15; /* yellow-400 */ }
+.speaker-btn.delete-btn {
+background: #fee2e2; /* red-100 */
+color: #dc2626; /* red-600 */
+}
+.speaker-btn.delete-btn:hover { background: #fecaca; /* red-200 */ }
+/* 🚀     NEW SPEAKER EDIT BTN STYLE */
+.speaker-btn.edit-btn {
+background: #dbeafe; /* blue-100 */
+color: #1e40af; /* blue-800 */
+}
+.speaker-btn.edit-btn:hover { background: #bfdbfe; /* blue-200 */ }
+/* ⭐⭐⭐    SPEAKER MESSAGE BOX STYLE    ⭐⭐⭐    */
+#speakerMessageBox {
+display: none; /* Will be shown by JS */
+transition: opacity 0.3s ease;
+z-index: 10;
+margin-bottom: 0.5rem;
+padding: 0.5rem 0.75rem;
+border-radius: 0.5rem;
+font-size: 0.875rem;
+font-weight: 500;
+}
+#speakerMessageBox.hidden {
+display: none;
+}
+/* 🚀     DASHBOARD */
+.stat-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1rem;
+}
+.stat-card {
+background: #f9fafb; /* gray-50 */
+border: 1px solid #e5e7eb; /* gray-200 */
+border-radius: 0.75rem;
+padding: 1rem;
+text-align: center;
+}
+.stat-card-title {
+font-size: 0.875rem;
+font-weight: 600;
+color: #4b5563; /* gray-600 */
+margin-bottom: 0.5rem;
+}
+.stat-card-value {
+font-size: 1.875rem;
+font-weight: 800;
+color: #1e40af; /* blue-800 */
+}
+.stat-card-value.ontime-ok { color: #059669; /* green-700 */ }
+.stat-card-value.ontime-warn { color: #d97706; /* amber-600 */ }
+.stat-card-value.ontime-bad { color: #dc2626; /* red-600 */ }
+/* ⭐⭐⭐    STYLE FOR FILE TYPE DASHBOARD CARD    ⭐⭐⭐    */
+#stat-file-types {
+font-size: 1rem; /* Smaller font */
+font-weight: 600; /* Bolder than normal */
+color: #1f2937; /* Dark gray */
+padding-top: 0.35rem; /* Adjust vertical alignment */
+line-height: 1.5; /* Ensure it fits */
+}
+/* ⭐⭐⭐    STYLES FOR FILE TYPE COLORS    ⭐⭐⭐    */
+.file-type-live { color: #1d4ed8; } /* blue-700 */
+.file-type-batch { color: #0e7490; } /* cyan-700 */
+.file-type-hp { color: #b45309; } /* amber-700 */
+.file-type-aiera { color: #be185d; } /* pink-700 */
+/* ⭐⭐⭐    NEW STYLES FOR FILTER BAR (UPDATED)    ⭐⭐⭐    */
+#filter-bar {
+display: flex;
+flex-wrap: wrap; /* Allow wrapping on small screens */
+gap: 0.5rem; /* Increased gap */
+align-items: center;
+background-color: #f9fafb;
+padding: 0.5rem; /* Increased padding */
+border-radius: 0.5rem;
+border: 1px solid #e5e7eb;
+margin-top: 1rem;
+}
+#filter-bar label {
+font-size: 0.875rem;
+font-weight: 600;
+color: #374151;
+}
+#filter-bar select, #filter-bar input[type="date"] { /* Added input[type="date"] */
+padding: 0.25rem 0.5rem;
+border: 1px solid #d1d5db;
+border-radius: 0.5rem;
+font-size: 0.875rem;
+}
+#clear-filter-btn {
+padding: 0.375rem 0.75rem;
+font-size: 0.875rem;
+font-weight: 600;
+background-color: #e5e7eb;
+color: #374151;
+border-radius: 0.5rem;
+transition: background-color 0.2s;
+margin-left: auto; /* Pushes to the right */
+}
+#clear-filter-btn:hover { background-color: #d1d5db; }
+/* ⭐⭐⭐    SPLIT BUTTON STYLES (for new resources)   ⭐⭐⭐   */
+.split-btn-container {
+display: flex;
+width: 100%;
+border-radius: 0.75rem;
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+overflow: hidden;
+}
+.split-btn {
+flex: 1;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 1rem;
+font-weight: 600;
+color: white;
+transition: all 0.2s;
+text-decoration: none;
+}
+.split-btn:hover { filter: brightness(110%); }
+.split-btn i { margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; }
+/* ⭐    Specific styling for Aiera buttons to prevent overlap    ⭐    */
+#btn-aiera-fr-started,
+#btn-aiera-fr-ended,
+#btn-aiera-sv-started,
+#btn-aiera-sv-ended {
+font-size: 0.78rem !important;
+padding-left: 0.25rem !important;
+padding-right: 0.25rem !important;
+line-height: 1.1 !important;
+white-space: normal !important;
+}
+.notes-db[open] > summary .group-icon {
+transform: rotate(90deg);
+}
+</style>
+</head>
+<body class="bg-gray-50">
+<div id="app" class="min-h-screen p-4 sm:p-8 pb-20">
+<div class="max-w-6xl mx-auto space-y-8">
+<div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+<div class="p-3 bg-blue-50 rounded-xl mb-4 shadow-sm">
+<h1 class="text-4xl font-extrabold text-black-800 flex items-center gap-3">
+<i data-lucide="timer" class="w-7 h-7 text-blue-600"></i>
+FD Editor Workflow Timer
+</h1>
+</div>
+<p id="welcome-message-container" class="text-xl text-gray-700 font-bold p-3 bg-white-50 rounded-lg border border-red-200 flex items-center gap-3 mb-1">
+<i data-lucide="calendar" class="w-6 h-6 text-red-600"></i>
+<span class="text-black-700">Welcome, [User Name]!</span> </p>
+<div class="p-2 bg-gray-50 rounded-lg border border-gray-200">
+<p class="text-sm text-gray-600 font-medium leading-relaxed">
+<span class="text-sm text-blue-700 font-semibold mr-1">
+<i data-lucide="info" class="w-4 h-4 inline-block align-text-center"></i> Note:
+</span>
+This Workflow Timer, inspired by the NW Workflow Logger, is for personal use only by FD Editors to track time and ensure work is submitted within TAT.
+</p>
+</div>
+</div>
+<div class="bg-white p-6 pb-5 rounded-2xl shadow-xl border-l-4 border-blue-500">
+<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
+<i data-lucide="settings" class="w-6 h-6 text-blue-600"></i>
+<span class="relative">AUDIO FILE DETAILS<span
+class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"></span></span>
+</h2>
+<div id="audio-length-container" class="mb-6">
+<label for="audio-length" class="block text-lg font-medium text-gray-700 mb-2">Input File Audio Length
+(HH:MM:SS)*</label>
+<input type="text" id="audio-length" placeholder="00:00:00" pattern="\d{2}:\d{2}:\d{2}"
+class="w-full p-2 border border-gray-300 rounded-lg text-3xl font-mono font-semibold text-center focus:border-blue-500 focus:ring-blue-500"
+value="00:00:00">
+<p id="audio-error" class="text-sm text-red-500 mt-1 hidden">Invalid format. Must be HH:MM:SS.</p>
+</div>
+<div class="flex flex-col md:flex-row gap-6 mb-4">
+<div class="flex-1 space-y-4">
+<div>
+<label for="file-type" class="block text-lg font-medium text-gray-700 mb-2">File Type*</label>
+<select id="file-type" class="w-full p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+<option value="live" selected>Live File (FR & SV)</option>
+<option value="batch">Batch File (FR & SV)</option>
+<option value="hp">HP File (FR Only)</option>
+<option value="aiera">Aiera File (FR & SV+HP)</option> </select>
+</div>
+<div>
+<label for="file-name" class="block text-lg font-medium text-gray-700 mb-2">Input File Name
+(Optional)</label>
+<input type="text" id="file-name" placeholder="e.g., 123456 live ABC Company Q1 2025"
+class="w-full p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+</div>
+</div>
+<div id="tat-targets-container" class="flex-1 bg-blue-50 p-2.5 rounded-xl border border-blue-200">
+<p class="text-blue-700 font-bold text-2xl mb-2 pb-1 border-b border-blue-200">TAT Targets</p>
+<dl id="live-batch-targets" class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
+<dt class="font-medium text-lg text-gray-700 flex items-center">
+<span class="w-2 h-2 bg-orange-400 rounded-full mr-1.5"></span>
+FR <span class="text-gray-500 ml-1" id="fr-multiplier-label">(0.5x)</span>
+</dt>
+<dd class="text-right">
+<span id="fr-target-display" class="target-chip fr text-sm px-2.5 py-1">00:00:00</span>
+</dd>
+<dt class="font-medium text-lg text-gray-700 flex items-center">
+<span class="w-2 h-2 bg-lime-500 rounded-full mr-1.5"></span>
+<span id="sv-label-text">SV</span> <span class="text-gray-500 ml-1" id="sv-multiplier-label">(1.5x)</span>
+</dt>
+<dd class="text-right">
+<span id="sv-target-display" class="target-chip sv text-sm px-2.5 py-1">00:00:00</span>
+</dd>
+<dt
+class="col-span-1 pt-2 mt-.5 border-t border-blue-200 font-bold text-gray-800 flex items-center text-lg">
+<span class="w-2.5 h-2.5 bg-indigo-600 rounded-full mr-1.5"></span>
+Overall <span class="text-gray-600 ml-1" id="overall-multiplier-label">(2.0x)</span>
+</dt>
+<dd class="pt-2 mt-.5 border-t border-blue-200 text-right">
+<span id="overall-target-display"
+class="target-chip overall mt-.5 text-base px-3 py-1.5 font-bold">00:00:00</span>
+</dd>
+</dl>
+<dl id="hp-targets" class="hidden grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
+<dt
+class="col-span-1 font-bold text-gray-800 flex items-center text-lg">
+<span class="w-2.5 h-2.5 bg-orange-400 rounded-full mr-1.5"></span>
+FR Target
+</dt>
+<dd class="text-right">
+<span
+class="target-chip fr mt-.5 text-base px-3 py-1.5 font-bold">01:30:00</span>
+</dd>
+<dt class="col-span-2 text-sm text-gray-600 p-4 bg-yellow-50 border border-yellow-200 rounded-lg mt-4">
+HP files have a fixed 1.5-hour TAT regardless of audio length.
+</dt>
+</dl>
+</div>
+</div>
+<div class="flex items-center p-2 bg-red-50 rounded-xl border border-red-200 w-full mt-4">
+<input id="beep-alerts" type="checkbox" checked
+class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+<label for="beep-alerts" id="beep-alerts-label" class="ml-2 block text-sm font-medium text-red-700">
+Beep Alerts (FR: 5 min left · SV: 10 & 5 min left)
+</label>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-cyan-500">
+<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
+<i data-lucide="clock" class="w-6 h-6 text-cyan-600"></i>
+<span class="relative">
+WORKFLOW TIMER AND PROGRESS
+<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"></span>
+</span>
+</h2>
+<div id="live-batch-buttons" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+<button id="btn-fr-started" class="workflow-btn btn-fr-started" disabled>1) FR Started</button>
+<button id="btn-fr-ended" class="workflow-btn btn-fr-ended" disabled>2) FR Ended</button>
+<button id="btn-sv-started" class="workflow-btn btn-sv-started" disabled>3) SV Started</button>
+<button id="btn-sv-ended" class="workflow-btn btn-sv-ended" disabled>4) SV Ended</button>
+<button id="btn-log-another" class="workflow-btn col-span-2 sm:col-span-1">Reset</button>
+</div>
+<div id="aiera-buttons" class="hidden grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+<button id="btn-aiera-fr-started" class="workflow-btn btn-aiera-started btn-sm-text" disabled>1) Aiera – FR Started</button>
+<button id="btn-aiera-fr-ended" class="workflow-btn btn-aiera-started btn-sm-text" disabled>2) Aiera – FR Ended</button>
+<button id="btn-aiera-sv-started" class="workflow-btn btn-aiera-svhp-started btn-sm-text" disabled>3) SV + HP Started</button>
+<button id="btn-aiera-sv-ended" class="workflow-btn btn-aiera-svhp-ended btn-sm-text" disabled>4) SV + HP Ended</button>
+<button id="btn-log-another-aiera" class="workflow-btn col-span-2 sm:col-span-1">Reset</button>
+</div>
+<div id="hp-buttons" class="hidden grid grid-cols-3 gap-3 mb-5">
+<button id="btn-hp-fr-started" class="workflow-btn btn-fr-started col-span-1" disabled>HP - FR Started</button>
+<button id="btn-hp-fr-ended" class="workflow-btn btn-fr-ended col-span-1" disabled>HP - FR Ended</button>
+<button id="btn-log-another-hp" class="workflow-btn col-span-1">Reset</button>
+</div>
+<div class="mb-6">
+<div class="toggle-capsule">
+<button id="toggle-countdown" class="active">COUNTDOWN</button>
+<button id="toggle-stopwatch">STOPWATCH</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-3 pb-2 border-b-2 border-gray-200 font-bold text-gray-700 text-sm sm:text-base">
+<div>DESCRIPTION</div>
+<div class="text-center">TIME</div>
+</div>
+<div id="live-batch-timers" class="space-y-6">
+<div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
+<div class="text-xl font-bold text-gray-800 self-center">Overall (Total TAT - <span id="overall-tat-label-display">2.0x</span>)</div>
+<div class="text-center flex flex-col items-center">
+<span id="overall-time" class="timer-display inline-block">00:00:00</span>
+<span id="overall-target" class="target-chip overall">Target: 00:00:00</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
+<div class="text-xl font-bold text-gray-800 self-center flex flex-col">
+First Review (FR - 0.5x)
+<div id="fr-note-live" class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
+NOTE: After FR, Export to Microsoft Word (.docx) → Rename file to
+<span class="font-mono text-[0.55rem] border bg-gray-100/60 px-1 rounded">Date - Surname, First Name - File Number <span id="aiera-note-suffix"></span></span>
+→ Upload
+<a href="https://forms.gle/Hxukyvt9dVxzcyUU7" target="_blank" class="text-blue-500 hover:text-blue-600 underline">here</a>. See
+<a href="https://docs.google.com/document/d/15mF1rMT5GEAAWtQw7HOGiT33CeCLglOEG8N-K_Ap9UM/edit?tab=t.0#heading=h.z6xrsh9jk47k" target="_blank" class="text-blue-500 hover:text-blue-600 underline">DITL</a>
+for file format.        </div>
+</div>
+<div class="text-center flex flex-col items-center">
+<span id="fr-time" class="timer-display inline-block">00:00:00</span>
+<span id="fr-target" class="target-chip fr">Target: 00:00:00</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 py-3">
+<div class="text-xl font-bold text-gray-800 self-center flex flex-col">
+<span id="sv-stage-title">Speaker Verified (SV - 1.5x)</span>
+<div class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
+NOTE: After SV, Go to <a id="sv-overview-link" href="https://editor.inflexiontranscribe.com/my-profile" target="_blank" class="text-blue-500 hover:text-blue-600 underline">Overview</a> → Click checkmark to validate.
+</div>
+</div>
+<div class="text-center flex flex-col items-center">
+<span id="sv-time" class="timer-display inline-block">00:00:00</span>
+<span id="sv-target" class="target-chip sv">Target: 00:00:00</span>
+</div>
+</div>
+</div>
+<div id="hp-timer" class="hidden space-y-6">
+<div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
+<div class="text-xl font-bold text-gray-800 self-center flex flex-col">
+HP First Review (FR)
+<div class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
+NOTE: HP files have a fixed 1.5-hour TAT. Press "HP - FR Ended" to stop the timer and log the file.
+</div>
+</div>
+<div class="text-center flex flex-col items-center">
+<span id="hp-fr-time" class="timer-display inline-block">01:30:00</span>
+<span id="hp-fr-target" class="target-chip fr">Target: 01:30:00</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-indigo-500">
+<div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2">
+<i data-lucide="check-square" class="w-6 h-6 text-indigo-600"></i>
+<span class="relative">
+LOGGED SUBMISSIONS
+<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-blue-400 rounded-full"></span>
+</span>
+</h2>
+<div class="flex flex-wrap gap-2">
+<button id="import-logs-btn" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1">
+<i data-lucide="upload" class="w-4 h-4"></i> Import Logs
+</button>
+<button id="export-logs-btn" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-1">
+<i data-lucide="download" class="w-4 h-4"></i> Export Logs
+</button>
+<button id="export-csv-btn" class="px-3 py-1.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium flex items-center gap-1">
+<i data-lucide="table-2" class="w-4 h-4"></i> Export CSV
+</button>
+<button id="clear-all-logs" class="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium flex items-center gap-1">
+<i data-lucide="trash-2" class="w-4 h-4"></i> Clear All
+</button>
+<button id="manual-log-btn" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium flex items-center gap-1">
+<i data-lucide="plus" class="w-4 h-4"></i> Manual Log
+</button>
+</div>
+</div>
+<p class="text-xs text-gray-500 -mt-2 mb-4 px-1">
+Use <strong>Import/Export Logs</strong> to back up or move your data (.json) to another browser.
+Use <strong>Export CSV</strong> to open your logs in Excel or Sheets.
+</p>
+<div id="filter-bar">
+<i data-lucide="filter" class="w-5 h-5 text-gray-500"></i>
+<label for="filter-year">Year:</label>
+<select id="filter-year">
+<option value="all">All Years</option>
+</select>
+<label for="filter-month">Month:</label>
+<select id="filter-month">
+<option value="all">All Months</option>
+</select>
+<label for="date-range-start">Start Date:</label>
+<input type="date" id="date-range-start">
+<label for="date-range-end">End Date:</label>
+<input type="date" id="date-range-end">
+<button id="clear-filter-btn">Clear Filter</button>
+</div>
+<div id="log-toast-container" class="toast-container mb-4 mt-4"></div>
+<div class="grid grid-cols-[2.5fr_1.5fr_1.5fr_1.5fr] gap-4 mb-3 p-3 bg-indigo-100 text-indigo-800 font-bold text-sm sm:text-base rounded-t-lg px-5"><div>File Name & Duration</div>
+<div class="text-center">FR Time / Target</div>
+<div class="text-center">SV Time / Target</div>
+<div class="text-center">Overall / Timestamps</div>
+</div>
+<div id="log-display" class="space-y-4 text-gray-600">
+<p class="px-5 py-3">No files logged yet. Logged times will appear here.</p>
+</div>
+<div id="log-summary" class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-sm font-bold text-indigo-800 text-center">
+Total Work Days: <span id="total-worked-days">0</span> | Total Files: <span id="total-files-footer">0</span> | Total AH: <span id="total-ah">0.00</span>
+</div>
+<p class="mt-4 text-xs text-red-500 font-medium p-2 bg-red-100 rounded-lg border border-red-200"> <span class="text-xs text-red-700 font-semibold mr-1">
+<i data-lucide="triangle-alert" class="w-4 h-4 inline-block align-text-center"></i> Note:
+</span>
+Switching browsers may clear logged data. Export your log data before switching.
+Always check the <strong><a href="https://script.google.com/macros/s/AKfycbxfJiAfQ0s8Yl5JcVvMMJqFbXEvfdNUBDXFqAPEAQHDWZPl96Yzj625DBh7POHV5eZ9/exec" target="_blank" class="text-blue-500 hover:text-blue-600 underline"> Official AH tracker</a></strong> and <strong><a href="https://script.google.com/macros/s/AKfycbwgwhhQlj1mQ6ab30zNOnw5wIgc8fLe9pF475GJwsyxWRYt12wdptO9AGrB5nKQglI/exec" target="_blank" class="text-blue-500 hover:text-blue-600 underline"> File Rework Tracker</a></strong> ‼️</p>
+<input type="file" id="log-import-input" accept=".json" class="hidden">
+</div>
+<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-purple-500">
+<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
+<i data-lucide="bar-chart-3" class="w-6 h-6 text-purple-600"></i>
+<span class="relative">
+PRODUCTIVITY DASHBOARD
+<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"></span>
+</span>
+</h2>
+<div class="stat-grid">
+<div class="stat-card">
+<div class="stat-card-title">Total Files Logged</div>
+<div id="stat-total-files" class="stat-card-value">0</div>
+</div>
+<div class="stat-card">
+<div class="stat-card-title">Total Audio Hours</div>
+<div id="stat-total-ah" class="stat-card-value">0.00</div>
+</div>
+<div class="stat-card">
+<div class="stat-card-title">Total File Types Done</div>
+<div id="stat-file-types" class="stat-card-value">
+<span class="file-type-live">LIVE: 0</span> |
+<span class="file-type-batch">BATCH: 0</span> |
+<span class="file-type-hp">HP: 0</span> |
+<span class="file-type-aiera">AIERA: 0</span> </div>
+</div>
+<div class="stat-card"> <div class="stat-card-title">FR Within TAT Rate</div>
+<div id="stat-ontime-fr" class="stat-card-value ontime-ok mb-2">N/A</div>
+<div id="stat-details-fr" class="text-xs text-gray-600 text-center space-y-1">
+</div>
+</div> <div class="stat-card"> <div class="stat-card-title">SV Within TAT Rate</div>
+<div id="stat-ontime-sv" class="stat-card-value ontime-ok mb-2">N/A</div>
+<div id="stat-details-sv" class="text-xs text-gray-600 text-center space-y-1">
+</div>
+</div>
+<div class="stat-card"> <div class="stat-card-title">Overall TAT Rate</div>
+<div id="stat-ontime-overall" class="stat-card-value ontime-ok mb-2">N/A</div>
+<div id="stat-details-overall" class="text-xs text-gray-600 text-center space-y-1">
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-yellow-500">
+<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
+<i data-lucide="link" class="w-6 h-6 text-yellow-600"></i>
+<span class="relative">
+RESOURCES
+<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full"></span>
+</span>
+</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="split-btn-container bg-gradient-to-r from-cyan-500 to-cyan-600">
+<a href="https://editor.inflexiontranscribe.com/dashboard" target="_blank" class="split-btn border-r border-blue-700 gap-2">
+<i data-lucide="layout-dashboard" class="w-5 h-5"></i> Transcribe Dashboard </a>
+<a href="https://staging.editor.inflexion.ai/dashboard" target="_blank" class="split-btn gap-2">
+<i data-lucide="layout-dashboard" class="w-5 h-5"></i> Inflexion Dashboard </a>
+</div>
+<a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl shadow-md hover:from-green-600 hover:to-green-700 transition">
+<i data-lucide="book-open-check" class="w-5 h-5 mr-2"></i> FD Style Guide
+</a>
+<a href="https://docs.google.com/document/d/15mF1rMT5GEAAWtQw7HOGiT33CeCLglOEG8N-K_Ap9UM/edit?tab=t.0#heading=h.7dpb3g8wv29y" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl shadow-md hover:from-purple-600 hover:to-purple-700 transition">
+<i data-lucide="file-text" class="w-5 h-5 mr-2"></i> FD DITL Guide
+</a>
+<a href="https://discord.com/channels/1391591320677519431/1435009120880296006/1435010581571703019" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl shadow-md hover:from-amber-600 hover:to-amber-700 transition">
+<i data-lucide="book-open-check" class="w-5 h-5 mr-2"></i> HP Style Guide
+</a>
+<a href="https://discord.com/channels/1391591320677519431/1391597777120923748" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:from-indigo-600 hover:to-indigo-700 transition">
+<i data-lucide="message-circle" class="w-5 h-5 mr-2"></i> FD Discord Server
+</a>
+<div class="split-btn-container bg-gradient-to-r from-pink-500 to-pink-600">
+<a href="https://docs.google.com/document/d/123h1eeF1s5J16t6qSvdSN2Z_UI9eymJkLF8z60sqEcM/edit?tab=t.0" target="_blank" class="split-btn border-r border-pink-700 gap-2">
+<i data-lucide="book-open-check" class="w-5 h-5"></i> Aiera Style Guide
+</a>
+<a href="https://docs.google.com/spreadsheets/d/1bgFa-izU7GtDy1eeqjpt8FFbFyVelml6xV43TJ-00HA/edit?gid=1021819507#gid=1021819507" target="_blank" class="split-btn gap-2">
+<i data-lucide="diff" class="w-5 h-5"></i> Aiera SG Diff Sheet
+</a>
+</div>
+</div>
+<details class="speaker-db mt-6 border-t border-gray-200 pt-6">
+<summary>
+<i data-lucide="chevron-right" class="group-icon w-5 h-5"></i><i data-lucide="circle-user" class="w-5 h-5"></i>
+SPEAKERS DATABASE
+</summary>
+<div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+<p class="text-sm text-gray-600 mb-4">
+This is your personal database for formatted and verified speakers. Add a speaker according to the format in the
+<a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="text-blue-500 hover:text-blue-600 underline">FD Style Guide</a>.
+<strong>This is only visible to you.</strong>
+</p>
+<div id="speakerMessageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg mb-2">
+<p id="speakerMessageText" class="text-xs font-medium"></p>
+</div>
+<div class="flex flex-col sm:flex-row gap-2 mb-1">
+<button id="add-speaker-btn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex-shrink-0 flex items-center gap-1">
+<i data-lucide="plus" class="w-4 h-4"></i> Add a Speaker
+</button>
+<input type="text" id="speaker-search" placeholder="Search speakers..." class="flex-1 p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+<div class="flex flex-shrink-0 gap-2">
+<button id="import-speaker-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex-shrink-0 flex items-center gap-1">
+<i data-lucide="upload" class="w-4 h-4"></i> Import
+</button>
+<button id="export-speaker-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex-shrink-0 flex items-center gap-1">
+<i data-lucide="download" class="w-4 h-4"></i> Export
+</button>
+</div>
+</div>
+<p class="text-xs text-gray-500 mt-3">Use <strong>Import/Export (.json)</strong> to back up or move your list to a new browser.</p>
+</div> <div id="speaker-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+</div>
+<input type="file" id="speaker-import-input" accept=".json" class="hidden">
+</details>
+<details class="notes-db mt-6 border-t border-gray-200 pt-6 text-lg">
+<summary style="list-style: none; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 700; color: #10b981;">
+<i data-lucide="chevron-right" class="group-icon w-5 h-5"></i>
+<i data-lucide="edit-3" class="w-5 h-5"></i>
+QUICK NOTEPAD
+</summary>
+<div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 notes-panel">
+<header class="p-2 border-b border-gray-200 flex items-center justify-between mb-2">
+<p class="text-sm text-gray-600 flex-grow pr-4">
+This is your private, persistent notepad. Quickly jot down ideas, temporary file names, or reminders.
+</p>
+<div class="flex flex-col items-end space-y-2 flex-shrink-0">
+<div id="messageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg">
+<p id="messageText" class="text-xs font-medium"></p>
+</div>
+<div class="flex space-x-2">
+<button id="clearBtn" class="flex items-center p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Clear All Text">
+<i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Clear
+</button>
+<button id="undoBtn" class="flex items-center p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Undo Last Action" disabled>
+<i data-lucide="undo-2" class="w-4 h-4 mr-1"></i> Undo
+</button>
+<button id="redoBtn" class="flex items-center p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Redo Last Action" disabled>
+<i data-lucide="redo-2" class="w-4 h-4 mr-1"></i> Redo
+</button>
+<button id="copyBtn" class="flex items-center p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md text-sm disabled:opacity-50" title="Copy Content to Clipboard">
+<i data-lucide="copy" class="w-4 h-4 mr-1"></i> Copy
+</button>
+</div>
+</div>
+</header>
+<textarea id="notesArea" placeholder="Drag the bottom corner to resize."
+class="flex-grow p-4 text-gray-700 text-base leading-relaxed focus:outline-none border border-gray-200 rounded-lg"></textarea>
+</div>
+</details>
+<p class="mt-4 text-sm text-gray-500 text-center">All links open in a new tab.</p>
+</div>
+       <!-- FOOTER -->
+       <footer class="mt-1 text-center text-xs italic text-gray-400">
+           Made by <span class="text-pink-500 font-semibold"> Arianne ✨</span> | Nov. 2025
+       </footer>
+</div>
+<div id="log-edit-modal" class="modal-overlay">
+<div class="modal-box">
+<h3 id="modal-title">Manual File Log</h3> <p id="modal-description" class="text-sm text-gray-600 mb-4">Log a file you completed without using the timer.
+Timestamps will be marked N/A, but all TATs will be calculated.
+You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.</p>
+<div class="modal-form">
+<div class="form-group full-span">
+<label for="modal-file-name">File Name</label>
+<input type="text" id="modal-file-name" placeholder="e.g., 123456 live ABC">
+</div>
+<div class="form-group">
+<label for="modal-file-type">File Type</label>
+<select id="modal-file-type">
+<option value="live">Live File</option>
+<option value="batch">Batch File</option>
+<option value="hp">HP File</option>
+<option value="aiera">Aiera File</option>
+</select>
+</div>
+<div class="form-group">
+<label for="modal-log-date">Log Date</label>
+<input type="date" id="modal-log-date">
+</div>
+<div class="form-group">
+<label for="modal-audio-length">Audio Length</label>
+<input type="text" id="modal-audio-length" placeholder="HH:MM:SS" value="00:00:00">
+</div>
+<div class="form-group">
+<label for="modal-fr-time">FR Time Taken</label>
+<input type="text" id="modal-fr-time" placeholder="HH:MM:SS" value="00:00:00">
+</div>
+<div class="form-group">
+<label for="modal-sv-time">SV Time Taken</label>
+<input type="text" id="modal-sv-time" placeholder="HH:MM:SS" value="00:00:00">
+</div>
+<div class="form-group">
+<label for="modal-overall-time">Overall Time Taken</label>
+<input type="text" id="modal-overall-time" placeholder="HH:MM:SS" value="00:00:00">
+</div>
+<div class="form-group full-span">
+<p id="modal-error" class="text-sm text-red-600 font-medium hidden">Please fill all fields and use HH:MM:SS format.</p>
+</div>
+</div>
+<div class="mt-5 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+<i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i>
+Please ensure you are only logging files you have actually completed.
+</div>
+<div class="flex justify-end gap-3 mt-5">
+<button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Cancel</button>
+<button id="modal-save-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Save Log</button>
+</div>
+</div>
+</div>
+</div> <script>
+// === GLOBAL STATE ===
+const STATE = {
+isTimerRunning: false,
+frStartTime: null, frEndTime: null,
+svStartTime: null, svEndTime: null,
+frStartedTimestamp: null, frEndedTimestamp: null,
+svStartedTimestamp: null, svEndedTimestamp: null,
+intervalId: null,
+fileName: '',
+audioLengthSeconds: 0,
+tatTargets: { fr: 0, sv: 0, overall: 0 },
+loggedFiles: [],
+currentStopwatchSeconds: { fr: 0, sv: 0, overall: 0 },
+clockIntervalId: null,
+viewMode: 'countdown',
+fileType: 'live', //       🚀       Default to 'live'
+speakers: [], //       🚀       ADDED SPEAKER STATE
+filterMonth: 'all', //     ⭐⭐⭐     NEW FILTER STATE
+filterYear: 'all',   //     ⭐⭐⭐     NEW FILTER STATE
+editingLogIndex: null //    ⭐⭐⭐    NEW: Tracks which log is being edited
+};
+// === NOTES STATE ===
+const NOTES_STATE = { history: [''], historyIndex: 0, isTyping: false, maxHistory: 50 };
+// === DOM ===
+const DOM = {
+// --- Original Elements ---
+fileNameInput: document.getElementById('file-name'),
+audioInput: document.getElementById('audio-length'),
+audioError: document.getElementById('audio-error'),
+beepAlerts: document.getElementById('beep-alerts'),
+beepAlertsLabel: document.getElementById('beep-alerts-label'), //       🚀       ADDED
+welcomeMessageContainer: document.getElementById('welcome-message-container').querySelector('span'),
+btnFRStarted: document.getElementById('btn-fr-started'),
+btnFREnded: document.getElementById('btn-fr-ended'),
+btnSVStarted: document.getElementById('btn-sv-started'),
+btnSVEnded: document.getElementById('btn-sv-ended'),
+btnLogAnother: document.getElementById('btn-log-another'),
+toggleCountdown: document.getElementById('toggle-countdown'),
+toggleStopwatch: document.getElementById('toggle-stopwatch'),
+overallTime: document.getElementById('overall-time'),
+overallTarget: document.getElementById('overall-target'),
+frTime: document.getElementById('fr-time'),
+frTarget: document.getElementById('fr-target'),
+svTime: document.getElementById('sv-time'),
+svTarget: document.getElementById('sv-target'),
+logDisplay: document.getElementById('log-display'),
+// --- Log Summary Footer Elements (FIXED) ---
+totalAH: document.getElementById('total-ah'),
+totalFilesFooter: document.getElementById('total-files-footer'),
+totalWorkedDays: document.getElementById('total-worked-days'),
+// --- Other Top Elements ---
+exportCSVBtn: document.getElementById('export-csv-btn'),
+clearAllLogsBtn: document.getElementById('clear-all-logs'),
+notesArea: document.getElementById('notesArea'),
+undoBtn: document.getElementById('undoBtn'),
+redoBtn: document.getElementById('redoBtn'),
+clearBtn: document.getElementById('clearBtn'),
+copyBtn: document.getElementById('copyBtn'),
+messageBox: document.getElementById('messageBox'),
+messageText: document.getElementById('messageText'),
+logToastContainer: document.getElementById('log-toast-container'),
+// --- Elements for HP/AIERA Mode ---
+fileType: document.getElementById('file-type'),
+audioLengthContainer: document.getElementById('audio-length-container'),
+tatTargetsContainer: document.getElementById('tat-targets-container'),
+liveBatchTargets: document.getElementById('live-batch-targets'),
+hpTargets: document.getElementById('hp-targets'),
+liveBatchButtons: document.getElementById('live-batch-buttons'),
+hpButtons: document.getElementById('hp-buttons'),
+btnHpFrStarted: document.getElementById('btn-hp-fr-started'),
+btnHpFrEnded: document.getElementById('btn-hp-fr-ended'),
+btnLogAnotherHp: document.getElementById('btn-log-another-hp'),
+liveBatchTimers: document.getElementById('live-batch-timers'),
+hpTimer: document.getElementById('hp-timer'),
+hpFrTime: document.getElementById('hp-fr-time'),
+hpFrTarget: document.getElementById('hp-fr-target'),
+aieraButtons: document.getElementById('aiera-buttons'),
+btnAieraFrStarted: document.getElementById('btn-aiera-fr-started'),
+btnAieraFrEnded: document.getElementById('btn-aiera-fr-ended'),
+btnAieraSvStarted: document.getElementById('btn-aiera-sv-started'),
+btnAieraSvEnded: document.getElementById('btn-aiera-sv-ended'),
+btnLogAnotherAiera: document.getElementById('btn-log-another-aiera'),
+// --- Log Edit Modal Elements ---
+manualLogBtn: document.getElementById('manual-log-btn'),
+modalOverlay: document.getElementById('log-edit-modal'),
+modalBox: document.getElementById('log-edit-modal').querySelector('.modal-box'),
+modalTitle: document.getElementById('modal-title'),
+modalDescription: document.getElementById('modal-description'),
+modalCancelBtn: document.getElementById('modal-cancel-btn'),
+modalSaveBtn: document.getElementById('modal-save-btn'),
+modalError: document.getElementById('modal-error'),
+modalFileName: document.getElementById('modal-file-name'),
+modalFileType: document.getElementById('modal-file-type'),
+modalLogDate: document.getElementById('modal-log-date'),
+modalAudioLength: document.getElementById('modal-audio-length'),
+modalFrTime: document.getElementById('modal-fr-time'),
+modalSvTime: document.getElementById('modal-sv-time'),
+modalOverallTime: document.getElementById('modal-overall-time'),
+svOverviewLink: document.getElementById('sv-overview-link'),
+// --- Speaker DB Elements ---
+speakerSearch: document.getElementById('speaker-search'),
+addSpeakerBtn: document.getElementById('add-speaker-btn'),
+speakerList: document.getElementById('speaker-list'),
+importSpeakerBtn: document.getElementById('import-speaker-btn'),
+exportSpeakerBtn: document.getElementById('export-speaker-btn'),
+speakerImportInput: document.getElementById('speaker-import-input'),
+speakerMessageBox: document.getElementById('speakerMessageBox'),
+speakerMessageText: document.getElementById('speakerMessageText'),
+// --- Dashboard Elements ---
+statTotalFiles: document.getElementById('stat-total-files'),
+statTotalAh: document.getElementById('stat-total-ah'),
+statFileTypes: document.getElementById('stat-file-types'),
+statOntimeFr: document.getElementById('stat-ontime-fr'),
+statOntimeSv: document.getElementById('stat-ontime-sv'),
+statOntimeOverall: document.getElementById('stat-ontime-overall'),
+statDetailsFr: document.getElementById('stat-details-fr'),
+statDetailsSv: document.getElementById('stat-details-sv'),
+statDetailsOverall: document.getElementById('stat-details-overall'),
+// --- Log Import/Export ---
+importLogsBtn: document.getElementById('import-logs-btn'),
+exportLogsBtn: document.getElementById('export-logs-btn'),
+logImportInput: document.getElementById('log-import-input'),
+// --- Date Range Elements (Now integrated into filter bar) ---
+dateRangeStart: document.getElementById('date-range-start'),
+dateRangeEnd: document.getElementById('date-range-end'),
+// --- Filter Bar Elements ---
+filterYearSelect: document.getElementById('filter-year'),
+filterMonthSelect: document.getElementById('filter-month'),
+clearFilterBtn: document.getElementById('clear-filter-btn')
+};
+// === UTILITIES (MODIFIED FOR MP3 ALERTS) ===
+// Helper function to get the raw content URL from the GitHub file page URL
+function getRawUrl(githubUrl) {
+  // Replaces 'github.com' with 'raw.githubusercontent.com' and removes '/blob'
+  return githubUrl.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob', '');
+}
+ 
+// --- NEW AUDIO URL CONSTANTS ---
+const AUDIO_URLS = {
+  'file_logged': getRawUrl('https://github.com/ariiannemay/fd-workflow-logger/blob/main/file_logged.mp3'),
+  'stage_done': getRawUrl('https://github.com/ariiannemay/fd-workflow-logger/blob/main/stage_done.mp3'),
+  '5_minutes_left': getRawUrl('https://github.com/ariiannemay/fd-workflow-logger/blob/main/5_minutes_left.mp3'),
+  '10_minutes_left': getRawUrl('https://github.com/ariiannemay/fd-workflow-logger/blob/main/10_minutes_left.mp3'),
+  '30_minutes_left': getRawUrl('https://github.com/ariiannemay/fd-workflow-logger/blob/main/30_minutes_left.mp3'),
+  '1_hour_left': getRawUrl('https://github.com/ariiannemay/fd-workflow-logger/blob/main/1_hour_left.mp3'),
+};
+ 
+// --- NEW AUDIO PLAYER FUNCTION ---
+// Replaces the old 'beep' logic with an actual audio player
+function playAudioAlert(alertType) {
+  if (!DOM.beepAlerts.checked) return;
+  try {
+      const audio = new Audio(AUDIO_URLS[alertType]);
+      audio.play().catch(e => console.warn(`Audio playback failed for ${alertType}:`, e));
+  } catch(e) {
+      console.warn("Audio player initialization failed:", e);
+  }
+}
+ 
+function timeToSeconds(t) { if (!t || !t.match(/^\d{2}:\d{2}:\d{2}$/)) return 0; const [h,m,s]=t.split(':').map(Number); return h*3600+m*60+s; }
+function secondsToTime(s) {
+  const neg = s < 0; s = Math.abs(s);
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return (neg?'-':'') + [h,m,sec].map(v=>v.toString().padStart(2,'0')).join(':');
+}
+function formatTimestamp(ts) {
+  if (!ts) return 'N/A';
+  const d = new Date(ts);
+  return `${d.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit'})} ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}`;
+}
+function formatLogDate(ts) {
+  if (!ts) return 'N/A';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+function getMonthYearKey(ts) {
+  if (!ts) return 'Unknown Date';
+  const d = new Date(ts);
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+// Renamed old beep to stub, new logic uses playAudioAlert
+function beep() {
+  // This is the old function logic, which we are replacing with MP3s, so we'll leave it as a no-op or console warning if called incorrectly
+  console.warn("Legacy beep() function called. Using new audio alert system.");
+}
+function updateLiveClock() {
+  const now = new Date();
+  const opts = { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true };
+  DOM.welcomeMessageContainer.innerHTML = `Welcome, FD Editor! Your current local date and time is <span class="text-red-600 font-bold">${now.toLocaleString('en-US',opts)}</span>`;
+}
+// === GORGEOUS TOAST FUNCTION ===
+function showLogToast(message, isSuccess = true) {
+const toast = document.createElement('div');
+toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
+const iconName = isSuccess ? 'check-circle' : 'alert-circle';
+toast.innerHTML = `
+<i data-lucide="${iconName}"></i>
+<span>${message}</span>
+`;
+DOM.logToastContainer.appendChild(toast);
+lucide.createIcons();
+toast.offsetHeight;
+toast.style.transform = 'translateX(0)';
+toast.style.opacity = '1';
+setTimeout(() => {
+toast.style.opacity = '0';
+toast.style.transform = 'translateY(-10px)';
+setTimeout(() => toast.remove(), 500);
+}, 3000);
+}
+// ===        🚀        CRASH RECOVERY ===
+function saveRecoveryData() {
+const recoveryState = { ...STATE };
+delete recoveryState.loggedFiles; // Don't save logs
+delete recoveryState.speakers;   // Don't save speakers
+localStorage.setItem('fd-timer-recovery-data', JSON.stringify(recoveryState));
+}
+function clearRecoveryData() {
+localStorage.removeItem('fd-timer-recovery-data');
+}
+// === MODIFIED MODE TOGGLER (FIXED) ===
+function toggleMode(mode) {
+// 1. DEFINE CONSTANTS: Place the links here for easy modification.
+const defaultLink = 'https://editor.inflexiontranscribe.com/my-profile';
+const aieraLink = 'https://staging.editor.inflexion.ai/my-profile'; // Your AIERA Link
+STATE.fileType = mode;
+// Hide all timers/buttons/targets
+DOM.liveBatchButtons.classList.add('hidden');
+DOM.hpButtons.classList.add('hidden');
+DOM.aieraButtons.classList.add('hidden');
+DOM.liveBatchTargets.classList.add('hidden');
+DOM.hpTargets.classList.add('hidden');
+DOM.liveBatchTimers.classList.add('hidden');
+DOM.hpTimer.classList.add('hidden');
+// Default/Reset UI Labels
+document.getElementById('fr-multiplier-label').textContent = '(0.5x)';
+document.getElementById('sv-label-text').textContent = 'SV';
+document.getElementById('sv-multiplier-label').textContent = '(1.5x)';
+document.getElementById('overall-multiplier-label').textContent = '(2.0x)';
+document.getElementById('sv-stage-title').textContent = 'Speaker Verified (SV - 1.5x)';
+document.getElementById('aiera-note-suffix').textContent = '';
+DOM.beepAlertsLabel.textContent = 'Beep Alerts (FR: 5 min left · SV: 10 & 5 min left)';
+// 2. CONDITIONAL LOGIC & LINK OVERRIDE
+if (mode === 'aiera') {
+// AIERA MODE SETUP
+DOM.aieraButtons.classList.remove('hidden');
+DOM.liveBatchTargets.classList.remove('hidden');
+DOM.liveBatchTimers.classList.remove('hidden');
+// Update Labels for AIERA (3.5x total)
+document.getElementById('sv-label-text').textContent = 'SV + HP';
+document.getElementById('sv-multiplier-label').textContent = '(3.0x)';
+document.getElementById('overall-multiplier-label').textContent = '(3.5x)';
+document.getElementById('sv-stage-title').textContent = 'SV + HP (3.0x)';
+document.getElementById('aiera-note-suffix').textContent = '- AE';
+DOM.beepAlertsLabel.textContent = 'Beep Alerts (FR: 5 min left · SV+HP: 1hr, 30 mins & 5 min left)';
+//   ⭐   CRITICAL LINK OVERRIDE FOR AIERA:
+if (DOM.svOverviewLink) {
+DOM.svOverviewLink.href = aieraLink;
+}
+}
+else if (mode === 'hp') {
+// HP MODE SETUP
+DOM.hpButtons.classList.remove('hidden');
+DOM.hpTargets.classList.remove('hidden');
+DOM.hpTargets.classList.add('grid');
+DOM.hpTimer.classList.remove('hidden');
+// HP logic uses the default SV link, so no specific override needed here, but the link is set in the 'else' block below.
+// Set HP Fixed Targets
+const hpTargetSeconds = 5400;
+STATE.tatTargets = { fr: hpTargetSeconds, sv: 0, overall: hpTargetSeconds };
+DOM.hpFrTime.textContent = secondsToTime(hpTargetSeconds);
+DOM.hpFrTarget.textContent = `Target: ${secondsToTime(hpTargetSeconds)}`;
+DOM.beepAlertsLabel.textContent = 'Beep Alerts (FR: 1 hour, 30 mins, & 5 mins left)';
+}
+else { // 'live' or 'batch' mode
+// LIVE/BATCH MODE SETUP
+DOM.liveBatchButtons.classList.remove('hidden');
+DOM.liveBatchTargets.classList.remove('hidden');
+DOM.liveBatchTimers.classList.remove('hidden');
+//   ⭐   DEFAULT LINK SETTING FOR LIVE/BATCH:
+if (DOM.svOverviewLink) {
+DOM.svOverviewLink.href = defaultLink;
+}
+}
+// Re-run input handler and visuals
+handleAudioInput(null, true);
+updateButtonVisuals();
+}
+// === TARGETS & DISPLAY ===
+function updateTargets(audioSec) {
+STATE.audioLengthSeconds = audioSec;
+// Note: HP targets are set in toggleMode, so we handle Live/Batch/AIERA here
+if (STATE.fileType === 'aiera') {
+//     ⭐⭐⭐     AIERA LOGIC (0.5x / 3.0x / 3.5x)     ⭐⭐⭐
+STATE.tatTargets.fr = Math.round(audioSec * 0.5);
+STATE.tatTargets.sv = Math.round(audioSec * 3.0);
+STATE.tatTargets.overall = Math.round(audioSec * 3.5);
+}
+else if (STATE.fileType === 'live' || STATE.fileType === 'batch') {
+//     ⭐⭐⭐     LIVE/BATCH LOGIC (0.5x / 1.5x / 2.0x)     ⭐⭐⭐
+STATE.tatTargets.fr = Math.round(audioSec * 0.5);
+STATE.tatTargets.sv = Math.round(audioSec * 1.5);
+STATE.tatTargets.overall = Math.round(audioSec * 2.0);
+}
+const fmt = t => `Target: ${secondsToTime(t)}`;
+const plain = t => secondsToTime(t);
+// Update Live/Batch displays
+DOM.frTarget.textContent = fmt(STATE.tatTargets.fr);
+DOM.svTarget.textContent = fmt(STATE.tatTargets.sv);
+DOM.overallTarget.textContent = fmt(STATE.tatTargets.overall);
+document.getElementById('fr-target-display').textContent = plain(STATE.tatTargets.fr);
+document.getElementById('sv-target-display').textContent = plain(STATE.tatTargets.sv);
+document.getElementById('overall-target-display').textContent = plain(STATE.tatTargets.overall);
+// Update timer displays if countdown is active and timer isn't running
+if (STATE.viewMode === 'countdown' && !STATE.isTimerRunning && !STATE.frStartTime) {
+DOM.frTime.textContent = plain(STATE.tatTargets.fr);
+DOM.svTime.textContent = plain(STATE.tatTargets.sv);
+DOM.overallTime.textContent = plain(STATE.tatTargets.overall);
+// Update HP display too (for consistency)
+if (STATE.fileType === 'hp') {
+DOM.hpFrTime.textContent = secondsToTime(STATE.tatTargets.fr);
+}
+}
+updateButtonVisuals();
+}
+// === MODIFIED BEEP LOGIC IN updateDisplay (UPDATED FOR MP3S) ===
+function updateDisplay() {
+  if (!STATE.frStartTime && STATE.audioLengthSeconds === 0 && (STATE.fileType !== 'hp')) return;
+  if (!STATE.frStartTime && STATE.fileType === 'hp') {
+  // In HP mode, we can start timer without audio length
+  } else if (!STATE.frStartTime) {
+  return;
+  }
+  const now = Date.now();
+  if (STATE.frStartTime) {
+  const end = STATE.frEndTime || now;
+  STATE.currentStopwatchSeconds.fr = Math.floor((end - STATE.frStartTime) / 1000);
+  }
+  if (STATE.svStartTime) {
+  const end = STATE.svEndTime || now;
+  STATE.currentStopwatchSeconds.sv = Math.floor((end - STATE.svStartTime) / 1000);
+  }
+  if (STATE.frStartTime) {
+  // In HP mode, overall time is just FR time
+  const end = STATE.fileType === 'hp' ? (STATE.frEndTime || now) : (STATE.svEndTime || now);
+  STATE.currentStopwatchSeconds.overall = Math.floor((end - STATE.frStartTime) / 1000);
+  }
+  const showCountdown = STATE.viewMode === 'countdown';
+  // Get correct targets based on mode
+  const frTarget = STATE.tatTargets.fr;
+  const svTarget = STATE.tatTargets.sv;
+  const ovTarget = STATE.tatTargets.overall;
+  const frCD = secondsToTime(frTarget - STATE.currentStopwatchSeconds.fr);
+  const svCD = secondsToTime(svTarget - STATE.currentStopwatchSeconds.sv);
+  const ovCD = secondsToTime(ovTarget - STATE.currentStopwatchSeconds.overall);
+  const frSW = secondsToTime(STATE.currentStopwatchSeconds.fr);
+  const svSW = secondsToTime(STATE.currentStopwatchSeconds.sv);
+  const ovSW = secondsToTime(STATE.currentStopwatchSeconds.overall);
+  // Update the correct timer display
+  if (STATE.fileType === 'hp') {
+      DOM.hpFrTime.textContent = showCountdown ? frCD : frSW;
+      DOM.hpFrTime.classList.toggle('overdue', (frTarget > 0 && STATE.currentStopwatchSeconds.fr > frTarget));
+  } else {
+      DOM.frTime.textContent = showCountdown ? frCD : frSW;
+      DOM.svTime.textContent = showCountdown ? svCD : svSW;
+      DOM.overallTime.textContent = showCountdown ? ovCD : ovSW;
+      DOM.frTime.classList.toggle('overdue', (frTarget > 0 && STATE.currentStopwatchSeconds.fr > frTarget));
+      DOM.svTime.classList.toggle('overdue', (svTarget > 0 && STATE.currentStopwatchSeconds.sv > svTarget));
+      DOM.overallTime.classList.toggle('overdue', (ovTarget > 0 && STATE.currentStopwatchSeconds.overall > ovTarget));
+  }
+ 
+  // === NEW MP3 BEEP ALERT LOGIC (REPLACING OLD BEEP) ===
+  if (showCountdown && DOM.beepAlerts.checked) {
+      const frLeft = frTarget - STATE.currentStopwatchSeconds.fr;
+      const svLeft = svTarget - STATE.currentStopwatchSeconds.sv;
+      const frTimerDisplay = STATE.fileType === 'hp' ? DOM.hpFrTime : DOM.frTime;
+ 
+      if (STATE.fileType === 'hp') {
+          // HP Beeps: 1hr (3600s), 30min (1800s), 5min (300s)
+          if (frLeft === 3600) {
+              playAudioAlert('1_hour_left');
+              frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+          } else if (frLeft === 1800) {
+              playAudioAlert('30_minutes_left');
+              frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+          } else if (frLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+          }
+      } else if (STATE.fileType === 'aiera') {
+          // AIERA LOGIC (FR: 5min; SV+HP: 1hr, 30min, 5min)
+          // FR Beep: 5min (300s)
+          if (frLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              DOM.frTime.classList.add('beep-active');
+              setTimeout(()=>DOM.frTime.classList.remove('beep-active'), 500);
+          }
+          // SV+HP Beep: 1hr (3600s), 30min (1800s), 5min (300s)
+          if (svLeft === 3600) {
+              playAudioAlert('1_hour_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          } else if (svLeft === 1800) {
+              playAudioAlert('30_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          } else if (svLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          }
+      } else { // 'live' or 'batch'
+          // LIVE/BATCH LOGIC (FR: 5min; SV: 10min, 5min)
+          // FR Beep: 5min (300s)
+          if (frLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+          }
+          // SV Beep: 10min (600s), 5min (300s)
+          if (svLeft === 600) {
+              playAudioAlert('10_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          } else if (svLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          }
+      }
+  }
+}
+// === TIMER CONTROL ===
+function startMainTimer() {
+if (STATE.intervalId) clearInterval(STATE.intervalId);
+STATE.isTimerRunning = true;
+STATE.intervalId = setInterval(() => {
+updateDisplay();
+saveRecoveryData(); //       🚀       Save state every second while running
+}, 1000);
+updateDisplay();
+}
+function stopMainTimer() {
+STATE.isTimerRunning = false;
+if (STATE.intervalId) { clearInterval(STATE.intervalId); STATE.intervalId = null; }
+}
+// === MODIFIED BUTTON VISUALS ===
+function updateButtonVisuals() {
+// --- Reset all buttons first ---
+const liveBtns = [DOM.btnFRStarted, DOM.btnFREnded, DOM.btnSVStarted, DOM.btnSVEnded];
+const hpBtns = [DOM.btnHpFrStarted, DOM.btnHpFrEnded];
+const aieraBtns = [DOM.btnAieraFrStarted, DOM.btnAieraFrEnded, DOM.btnAieraSvStarted, DOM.btnAieraSvEnded];
+[...liveBtns, ...hpBtns, ...aieraBtns].forEach(b => {
+if(b) { b.classList.remove('btn-active-red', 'btn-completed-dark'); b.disabled = true; }
+});
+DOM.btnLogAnother.disabled = false;
+DOM.btnLogAnotherHp.disabled = false;
+DOM.btnLogAnotherAiera.disabled = false;
+DOM.fileNameInput.disabled = false;
+DOM.fileType.disabled = false;
+DOM.audioInput.disabled = false;
+// --- Logic for AIERA Mode ---
+if (STATE.fileType === 'aiera') {
+DOM.audioInput.disabled = false;
+if (!STATE.frStartTime) {
+DOM.btnAieraFrStarted.disabled = STATE.audioLengthSeconds === 0;
+} else if (STATE.frStartTime && !STATE.frEndTime) {
+DOM.fileNameInput.disabled = true; DOM.fileType.disabled = true; DOM.audioInput.disabled = true;
+DOM.btnAieraFrStarted.classList.add('btn-active-red');
+DOM.btnAieraFrEnded.disabled = false;
+} else if (STATE.frEndTime && !STATE.svEndTime) {
+DOM.fileNameInput.disabled = true; DOM.fileType.disabled = true; DOM.audioInput.disabled = true;
+DOM.btnAieraFrStarted.classList.add('btn-completed-dark');
+DOM.btnAieraFrEnded.classList.add('btn-completed-dark');
+DOM.btnAieraSvStarted.disabled = STATE.svStartTime != null;
+if (STATE.svStartTime) {
+DOM.btnAieraSvStarted.classList.add('btn-active-red');
+DOM.btnAieraSvEnded.disabled = false;
+} else {
+DOM.btnAieraSvStarted.classList.remove('btn-active-red');
+}
+} else if (STATE.svEndTime) {
+DOM.fileNameInput.disabled = true; DOM.fileType.disabled = true; DOM.audioInput.disabled = true;
+[DOM.btnAieraFrStarted, DOM.btnAieraFrEnded, DOM.btnAieraSvStarted, DOM.btnAieraSvEnded].forEach(b => b.classList.add('btn-completed-dark'));
+}
+}
+// --- Logic for HP Mode ---
+else if (STATE.fileType === 'hp') {
+DOM.audioInput.disabled = false; // Audio length is optional for HP, but shouldn't be disabled
+if (!STATE.frStartTime) {
+DOM.btnHpFrStarted.disabled = false;
+} else if (STATE.frStartTime && !STATE.frEndTime) {
+DOM.fileNameInput.disabled = true;
+DOM.fileType.disabled = true;
+DOM.btnHpFrStarted.classList.add('btn-active-red');
+DOM.btnHpFrEnded.disabled = false;
+} else if (STATE.frEndTime) {
+DOM.fileNameInput.disabled = true;
+DOM.fileType.disabled = true;
+DOM.btnHpFrStarted.classList.add('btn-completed-dark');
+DOM.btnHpFrEnded.classList.add('btn-completed-dark');
+}
+}
+// --- Logic for Live/Batch Mode ---
+else { // 'live' or 'batch'
+DOM.audioInput.disabled = false;
+if (!STATE.frStartTime) {
+DOM.btnFRStarted.disabled = STATE.audioLengthSeconds === 0;
+} else if (STATE.frStartTime && !STATE.frEndTime) {
+DOM.fileNameInput.disabled = true;
+DOM.fileType.disabled = true;
+DOM.audioInput.disabled = true;
+DOM.btnFRStarted.classList.add('btn-active-red');
+DOM.btnFREnded.disabled = false;
+} else if (STATE.frEndTime && !STATE.svEndTime) {
+DOM.fileNameInput.disabled = true;
+DOM.fileType.disabled = true;
+DOM.audioInput.disabled = true;
+DOM.btnFRStarted.classList.add('btn-completed-dark');
+DOM.btnFREnded.classList.add('btn-completed-dark');
+DOM.btnSVStarted.disabled = STATE.svStartTime != null;
+if (STATE.svStartTime) {
+DOM.btnSVStarted.classList.add('btn-active-red');
+DOM.btnSVEnded.disabled = false;
+} else {
+DOM.btnSVStarted.classList.remove('btn-active-red');
+}
+} else if (STATE.svEndTime) {
+DOM.fileNameInput.disabled = true;
+DOM.fileType.disabled = true;
+DOM.audioInput.disabled = true;
+liveBtns.forEach(b => b.classList.add('btn-completed-dark'));
+}
+}
+}
+// === MODIFIED BUTTON HANDLER (TO ADD MP3 ALERTS) ===
+function handleButtonClick(e) {
+  const id = e.target.id; const now = Date.now();
+  let isStageEnd = false; // Triggers stage_done.mp3
+  let isFileLog = false;  // Triggers file_logged.mp3
+ 
+  // --- HP Mode Logic ---
+  if (STATE.fileType === 'hp') {
+      switch(id) {
+          case 'btn-hp-fr-started':
+              if (!STATE.frStartTime) {
+                  STATE.frStartTime = now; STATE.frStartedTimestamp = now;
+                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
+              } break;
+          case 'btn-hp-fr-ended':
+              if (STATE.frStartTime && !STATE.frEndTime) {
+                  STATE.frEndTime = now; STATE.frEndedTimestamp = now;
+                  updateDisplay();
+                  stopMainTimer();
+                  logSubmission(); // Auto-log on finish
+                  isStageEnd = true; // HP-FR-Ended is a stage end
+                  isFileLog = true;  // HP-FR-Ended is also a file log
+              } break;
+          case 'btn-log-another-hp':
+              resetState(); break;
+      }
+  }
+  // --- AIERA Mode Logic ---
+  else if (STATE.fileType === 'aiera') {
+      switch(id) {
+          case 'btn-aiera-fr-started':
+              if (!STATE.frStartTime && STATE.audioLengthSeconds > 0) {
+                  STATE.frStartTime = now; STATE.frStartedTimestamp = now;
+                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
+              } break;
+          case 'btn-aiera-fr-ended':
+              if (STATE.frStartTime && !STATE.frEndTime) {
+                  STATE.frEndTime = now; STATE.frEndedTimestamp = now;
+                  if (!STATE.svStartTime){ STATE.svStartTime = now; STATE.svStartedTimestamp = now; }
+                  startMainTimer();
+                  isStageEnd = true; // Aiera-FR-Ended is a stage end
+              } break;
+          case 'btn-aiera-sv-started':
+              if (STATE.frEndTime && !STATE.svStartTime) {
+                  STATE.svStartTime = now; STATE.svStartedTimestamp = now; startMainTimer();
+              } break;
+          case 'btn-aiera-sv-ended':
+              if (STATE.svStartTime && !STATE.svEndTime) {
+                  STATE.svEndTime = now; STATE.svEndedTimestamp = now;
+                  updateDisplay(); stopMainTimer(); logSubmission();
+                  isFileLog = true; // SV + HP Ended is a file log
+              } break;
+          case 'btn-log-another-aiera':
+              resetState(); break;
+      }
+  }
+  // --- Live/Batch Mode Logic ---
+  else { // 'live' or 'batch'
+      switch(id){
+          case 'btn-fr-started':
+              if (!STATE.frStartTime && STATE.audioLengthSeconds > 0){
+                  STATE.frStartTime = now; STATE.frStartedTimestamp = now;
+                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
+              } break;
+          case 'btn-fr-ended':
+              if (STATE.frStartTime && !STATE.frEndTime){
+                  STATE.frEndTime = now; STATE.frEndedTimestamp = now;
+                  if (!STATE.svStartTime){ STATE.svStartTime = now; STATE.svStartedTimestamp = now; }
+                  startMainTimer();
+                  isStageEnd = true; // FR-Ended is a stage end
+              } break;
+          case 'btn-sv-started':
+              if (STATE.frEndTime && !STATE.svStartTime){
+                  STATE.svStartTime = now; STATE.svStartedTimestamp = now; startMainTimer();
+              } break;
+          case 'btn-sv-ended':
+              if (STATE.svStartTime && !STATE.svEndTime){
+                  STATE.svEndTime = now; STATE.svEndedTimestamp = now;
+                  updateDisplay();
+                  stopMainTimer();
+                  logSubmission();
+                  isFileLog = true; // SV Ended is a file log
+              } break;
+          case 'btn-log-another':
+              resetState(); break;
+      }
+  }
+ 
+  // --- NEW AUDIO TRIGGER LOGIC ---
+  if (isStageEnd) {
+      playAudioAlert('stage_done');
+  }
+  if (isFileLog) {
+      // Delay playing file_logged so it doesn't overlap with stage_done if both trigger
+      setTimeout(() => playAudioAlert('file_logged'), 500);
+  }
+  // --- END NEW AUDIO TRIGGER LOGIC ---
+ 
+  // Save state for crash recovery
+  if (id.includes('started') || id.includes('ended')) {
+      saveRecoveryData();
+  }
+  updateButtonVisuals();
+}
+// === MODIFIED LOGGING (REMOVED OLD AUTO-LOG AUDIO CALL) ===
+function logSubmission(){
+// Guard clause
+if ((STATE.fileType !== 'hp') && !STATE.svEndTime) return;
+if (STATE.fileType === 'hp' && !STATE.frEndTime) return;
+// Create HP-specific data
+let svData = {};
+if (STATE.fileType === 'hp') {
+svData = {
+svTime: 'N/A', svTimeSec: 0,
+svTargetTime: 'N/A', svTargetSec: 0, svOnTime: true,
+svStartedTimestamp: null, svEndedTimestamp: null,
+overallTime: secondsToTime(STATE.currentStopwatchSeconds.fr), // Overall is just FR
+overallTimeSec: STATE.currentStopwatchSeconds.fr,
+overallTargetTime: secondsToTime(STATE.tatTargets.fr),
+overallTargetSec: STATE.tatTargets.fr,
+overallOnTime: STATE.currentStopwatchSeconds.fr <= STATE.tatTargets.fr
+};
+}
+// Create Live/Batch/Aiera-specific data
+else {
+svData = {
+svTime: secondsToTime(STATE.currentStopwatchSeconds.sv),
+svTimeSec: STATE.currentStopwatchSeconds.sv,
+svTargetTime: secondsToTime(STATE.tatTargets.sv),
+svTargetSec: STATE.tatTargets.sv,
+svOnTime: STATE.currentStopwatchSeconds.sv <= STATE.tatTargets.sv,
+svStartedTimestamp: STATE.svStartedTimestamp,
+svEndedTimestamp: STATE.svEndedTimestamp,
+overallTime: secondsToTime(STATE.currentStopwatchSeconds.overall),
+overallTimeSec: STATE.currentStopwatchSeconds.overall,
+overallTargetTime: secondsToTime(STATE.tatTargets.overall),
+overallTargetSec: STATE.tatTargets.overall,
+overallOnTime: STATE.currentStopwatchSeconds.overall <= STATE.tatTargets.overall,
+};
+}
+const entry = {
+fileType: STATE.fileType, // ADDED
+fileName: STATE.fileName,
+audioLengthSeconds: STATE.audioLengthSeconds,
+audioHours: (STATE.audioLengthSeconds / 3600).toFixed(2),
+logDateTimestamp: STATE.frStartedTimestamp,
+frTime: secondsToTime(STATE.currentStopwatchSeconds.fr),
+frTimeSec: STATE.currentStopwatchSeconds.fr,
+frTargetTime: secondsToTime(STATE.tatTargets.fr),
+frTargetSec: STATE.tatTargets.fr,
+frOnTime: STATE.currentStopwatchSeconds.fr <= STATE.tatTargets.fr,
+frStartedTimestamp: STATE.frStartedTimestamp,
+frEndedTimestamp: STATE.frEndedTimestamp,
+...svData // Spread in the mode-specific data
+};
+STATE.loggedFiles.unshift(entry);
+//        🚀        BUG FIX: Sort all logs by date after adding
+STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp || 0));
+saveLogs();
+updateLogDisplay();
+updateDashboard(); //        🚀        Update dashboard
+populateFilterOptions(); //      ⭐⭐⭐      UPDATE FILTERS
+clearRecoveryData(); //        🚀        Clear crash data
+showLogToast('File logged successfully!', true);
+// NOTE: playAudioAlert('file_logged') call removed here, it's now in handleButtonClick
+}
+function saveLogs(){ localStorage.setItem('fd-logged-files', JSON.stringify(STATE.loggedFiles)); }
+window.deleteLog = i => {
+// Determine the file name for the confirmation message
+const logEntry = STATE.loggedFiles[i];
+const fileName = logEntry ? logEntry.fileName || 'this file' : 'this file';
+//   ⭐   FIX: Use a single standard browser confirmation   ⭐
+if (confirm(`WARNING: Are you sure you want to permanently delete the log entry for "${fileName}"? This action cannot be undone.`)) {
+STATE.loggedFiles.splice(i, 1);
+saveLogs();
+updateLogDisplay();
+updateDashboard();
+populateFilterOptions();
+showLogToast('Log deleted.', false);
+}
+};
+// ===    ⭐⭐⭐    NEW: FUNCTION TO OPEN THE EDIT MODAL (FIXED)   ⭐⭐⭐    ===
+function openManualLogModal() {
+  STATE.editingLogIndex = null; // Ensure we are in "new" mode
+  // 1. Set titles and button
+  DOM.modalTitle.textContent = 'Manual File Log';
+  DOM.modalDescription.textContent = 'Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.';
+  DOM.modalSaveBtn.textContent = 'Save Log';
+  // 2. Clear and enable all fields
+  DOM.modalFileName.value = '';
+  DOM.modalFileType.innerHTML = `
+<option value="live">Live File</option>
+<option value="batch">Batch File</option>
+<option value="hp">HP File</option>
+<option value="aiera">Aiera File</option>
+`;
+  DOM.modalFileType.value = 'live';
+  DOM.modalLogDate.value = new Date().toISOString().split('T')[0];
+  DOM.modalAudioLength.value = '00:00:00';
+  DOM.modalFrTime.value = '00:00:00';
+  DOM.modalSvTime.value = '00:00:00';
+  DOM.modalOverallTime.value = '00:00:00';
+  const allFields = [
+      DOM.modalFileName,
+      DOM.modalFileType,
+      DOM.modalLogDate,
+      DOM.modalAudioLength,
+      DOM.modalFrTime,
+      DOM.modalSvTime,
+      DOM.modalOverallTime
+  ];
+  allFields.forEach(field => field.disabled = false);
+  DOM.modalSvTime.disabled = false;
+  DOM.modalOverallTime.disabled = false;
+  // 3. Open Modal
+  DOM.modalOverlay.classList.add('open');
+}
+window.openEditModal = i => {
+  const log = STATE.loggedFiles[i];
+  if (!log) return;
+  STATE.editingLogIndex = i; // Set which log we're editing
+  // 1. Determine if it's a manual log
+  const isManualLog = log.frStartedTimestamp === null;
+  const isHp = log.fileType === 'hp';
+  const isAiera = log.fileType === 'aiera';
+  // 2. Set Modal Titles and Button
+  DOM.modalTitle.textContent = 'Edit Log Entry';
+  DOM.modalDescription.textContent = isManualLog
+      ? 'This is a manual log. All fields are editable.'
+      : 'This log was created by the timer. Only File Name and File Type can be changed.';
+  DOM.modalSaveBtn.textContent = 'Save Changes';
+  // 3. Populate Fields and set options
+  DOM.modalFileType.innerHTML = `
+<option value="live">Live File</option>
+<option value="batch">Batch File</option>
+<option value="hp">HP File</option>
+<option value="aiera">Aiera File</option>
+`;
+  DOM.modalFileName.value = log.fileName;
+  DOM.modalFileType.value = log.fileType || 'live';
+  DOM.modalAudioLength.value = secondsToTime(log.audioLengthSeconds);
+  DOM.modalFrTime.value = log.frTime === 'N/A' ? '00:00:00' : log.frTime;
+  DOM.modalSvTime.value = log.svTime === 'N/A' ? '00:00:00' : log.svTime;
+  DOM.modalOverallTime.value = log.overallTime === 'N/A' ? '00:00:00' : log.overallTime;
+  // Format date for the input field (YYYY-MM-DD)
+  const logDate = new Date(log.logDateTimestamp);
+  DOM.modalLogDate.value = logDate.toISOString().split('T')[0];
+  // 4. Enable/Disable fields based on your rules
+  const fieldsToToggle = [
+      DOM.modalLogDate,
+      DOM.modalAudioLength,
+      DOM.modalFrTime,
+      DOM.modalSvTime,
+      DOM.modalOverallTime
+  ];
+  fieldsToToggle.forEach(field => {
+      field.disabled = !isManualLog;
+  });
+  // File type is always editable
+  DOM.modalFileType.disabled = false;
+  // Handle SV/Overall disable for HP/Aiera type (even if manual)
+  if (isHp || isAiera) {
+      DOM.modalSvTime.disabled = true;
+      DOM.modalOverallTime.disabled = true;
+  }
+  // 5. Open Modal
+  DOM.modalOverlay.classList.add('open');
+}
+function clearAllLogs(){
+if (!STATE.loggedFiles.length) return;
+const modal = document.createElement('div');
+modal.innerHTML = `<div id="confirm-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+<div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+<h3 class="text-lg font-bold text-gray-900 mb-3">Confirm Deletion</h3>
+<p class="text-sm text-gray-600 mb-4">Delete <strong>ALL</strong> logs? Cannot be undone.</p>
+<div class="flex justify-end space-x-3">
+<button id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+<button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete All</button>
+</div>
+</div>
+</div>`;
+document.body.appendChild(modal);
+modal.querySelector('#cancel-delete').onclick = () => modal.remove();
+modal.querySelector('#confirm-delete').onclick = () => {
+STATE.loggedFiles=[];
+saveLogs();
+updateLogDisplay();
+resetDashboard(); //       🚀       Reset dashboard
+populateFilterOptions(); //     ⭐⭐⭐     UPDATE FILTERS
+modal.remove();
+showLogToast('All logs cleared.', false);
+};
+}
+// ===    ⭐⭐⭐    UPGRADED: DUAL-PURPOSE SAVE FUNCTION (FIXED AIERA VALIDATION)    ⭐⭐⭐    ===
+function handleLogModalSave() {
+DOM.modalError.classList.add('hidden');
+// 1. Get all values from modal
+const fileName = DOM.modalFileName.value.trim();
+const fileType = DOM.modalFileType.value;
+const logDate = DOM.modalLogDate.value; // YYYY-MM-DD
+const audioLengthStr = DOM.modalAudioLength.value;
+const frTimeStr = DOM.modalFrTime.value;
+const svTimeStr = DOM.modalSvTime.value;
+const overallTimeStr = DOM.modalOverallTime.value;
+// 2. Validate
+const timeRegex = /^\d{2}:\d{2}:\d{2}$/;
+const isHp = fileType === 'hp';
+const isAiera = fileType === 'aiera';
+if (!fileName || !logDate || !timeRegex.test(audioLengthStr) || !timeRegex.test(frTimeStr)) {
+DOM.modalError.textContent = 'Please fill all fields and use HH:MM:SS format.';
+DOM.modalError.classList.remove('hidden');
+return;
+}
+// Validation check for non-HP files: ensure SV and Overall time fields are correctly formatted
+if (!isHp) {
+if (!timeRegex.test(svTimeStr) || !timeRegex.test(overallTimeStr)) {
+// Use custom message for Aiera
+DOM.modalError.textContent = `Please fill SV${isAiera ? '+HP' : ''} and Overall time for ${fileType.toUpperCase()} files.`;
+DOM.modalError.classList.remove('hidden');
+return;
+}
+}
+// 3. Convert to seconds
+const audioLengthSeconds = timeToSeconds(audioLengthStr);
+const frTimeSec = timeToSeconds(frTimeStr);
+const svTimeSec = isHp ? 0 : timeToSeconds(svTimeStr);
+const overallTimeSec = isHp ? frTimeSec : timeToSeconds(overallTimeStr);
+// 4. Calculate Targets
+let frTargetSec, svTargetSec, overallTargetSec;
+//     ⭐⭐⭐     UPDATED TARGET LOGIC IN MODAL     ⭐⭐⭐
+if (isHp) {
+frTargetSec = 5400;
+svTargetSec = 0;
+overallTargetSec = 5400;
+} else if (fileType === 'aiera') {
+frTargetSec = Math.round(audioLengthSeconds * 0.5);
+svTargetSec = Math.round(audioLengthSeconds * 3.0); // 3.0x for Aiera SV
+overallTargetSec = Math.round(audioLengthSeconds * 3.5); // 3.5x Total
+} else {
+frTargetSec = Math.round(audioLengthSeconds * 0.5);
+svTargetSec = Math.round(audioLengthSeconds * 1.5);
+overallTargetSec = Math.round(audioLengthSeconds * 2.0);
+}
+// === LOGIC FOR EDIT VS. NEW ===
+if (STATE.editingLogIndex !== null) {
+// --- THIS IS AN EDIT ---
+const log = STATE.loggedFiles[STATE.editingLogIndex];
+if (!log) return; // Safety check
+// Check again if it was a manual log
+const isManualLog = log.frStartedTimestamp === null;
+// Always update File Name and Type
+log.fileName = fileName;
+log.fileType = fileType;
+// Only update date/times IF it was a manual log
+if (isManualLog) {
+log.logDateTimestamp = new Date(logDate + 'T12:00:00').getTime();
+log.audioLengthSeconds = audioLengthSeconds;
+log.audioHours = (audioLengthSeconds / 3600).toFixed(2);
+// Recalculate FR
+log.frTime = secondsToTime(frTimeSec);
+log.frTimeSec = frTimeSec;
+log.frTargetTime = secondsToTime(frTargetSec);
+log.frTargetSec = frTargetSec;
+log.frOnTime = frTimeSec === 0 ? true : frTimeSec <= frTargetSec;
+// Recalculate SV
+log.svTime = isHp ? 'N/A' : secondsToTime(svTimeSec);
+log.svTimeSec = svTimeSec;
+log.svTargetTime = isHp ? 'N/A' : secondsToTime(svTargetSec);
+log.svTargetSec = svTargetSec;
+log.svOnTime = isHp ? true : (svTimeSec === 0 ? true : svTimeSec <= svTargetSec);
+// Recalculate Overall
+log.overallTime = secondsToTime(overallTimeSec);
+log.overallTimeSec = overallTimeSec;
+log.overallTargetTime = secondsToTime(overallTargetSec);
+log.overallTargetSec = overallTargetSec;
+log.overallOnTime = overallTimeSec === 0 ? true : overallTimeSec <= overallTargetSec;
+}
+showLogToast('Log updated successfully!', true);
+} else {
+// --- THIS IS A NEW MANUAL LOG ---
+const entry = {
+fileType: fileType,
+fileName: fileName,
+audioLengthSeconds: audioLengthSeconds,
+audioHours: (audioLengthSeconds / 3600).toFixed(2),
+logDateTimestamp: new Date(logDate + 'T12:00:00').getTime(),
+frTime: secondsToTime(frTimeSec),
+frTimeSec: frTimeSec,
+frTargetTime: secondsToTime(frTargetSec),
+frTargetSec: frTargetSec,
+frOnTime: frTimeSec === 0 ? true : frTimeSec <= frTargetSec,
+svTime: isHp ? 'N/A' : secondsToTime(svTimeSec),
+svTimeSec: svTimeSec,
+svTargetTime: isHp ? 'N/A' : secondsToTime(svTargetSec),
+svTargetSec: svTargetSec,
+svOnTime: isHp ? true : (svTimeSec === 0 ? true : svTimeSec <= svTargetSec),
+overallTime: secondsToTime(overallTimeSec),
+overallTimeSec: overallTimeSec,
+overallTargetTime: secondsToTime(overallTargetSec),
+overallTargetSec: overallTargetSec,
+overallOnTime: overallTimeSec === 0 ? true : overallTimeSec <= overallTargetSec,
+frStartedTimestamp: null, // This marks it as a manual log
+frEndedTimestamp: null,
+svStartedTimestamp: null,
+svEndedTimestamp: null,
+};
+STATE.loggedFiles.unshift(entry);
+showLogToast('File logged manually!', true);
+}
+// 6. Save, Update, and Close
+STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp || 0));
+saveLogs();
+updateLogDisplay();
+updateDashboard();
+populateFilterOptions();
+closeModal();
+}
+// ===      ⭐⭐⭐      REBUILT LOG DISPLAY (WITH FILTERING AND DYNAMIC SUMMARY FIXED)      ⭐⭐⭐      ===
+function updateLogDisplay(){
+// 1. Filter logs based on STATE
+const logsToDisplay = STATE.loggedFiles
+.map((log, index) => ({ log, originalIndex: index })) // Pair log with its original index
+.filter(item => {
+const ts = item.log.logDateTimestamp || item.log.frStartedTimestamp;
+if (!ts) return false; // Don't show logs without a date
+const d = new Date(ts);
+//   ⭐   NEW: Get Date Range values
+const startDate = DOM.dateRangeStart.value;
+const endDate = DOM.dateRangeEnd.value;
+//   ⭐   NEW: Custom Date Range Filter (takes priority)
+if (startDate && endDate) {
+const startTime = new Date(startDate + 'T00:00:00').getTime();
+const endTime = new Date(endDate + 'T23:59:59').getTime();
+return ts >= startTime && ts <= endTime;
+}
+// Original Month/Year Filter (if no custom range set)
+const logYear = d.getFullYear().toString();
+const logMonth = d.toLocaleString('en-US', { month: 'long' });
+const yearMatch = (STATE.filterYear === 'all') || (logYear === STATE.filterYear);
+const monthMatch = (STATE.filterMonth === 'all') || (logMonth === STATE.filterMonth);
+return yearMatch && monthMatch;
+});
+// 2. Calculate Totals *from the filtered list* and group dates
+const totalAH = logsToDisplay.reduce((s, item) => s + (parseFloat(item.log.audioHours) || 0), 0).toFixed(2);
+const totalFiles = logsToDisplay.length;
+const monthGroups = new Map();
+const allWorkedDates = new Set();
+logsToDisplay.forEach(item => {
+const { log, originalIndex } = item;
+const ts = log.logDateTimestamp || log.frStartedTimestamp;
+const monthKey = getMonthYearKey(ts);
+const dateKey = formatLogDate(ts);
+const dateString = new Date(ts).toISOString().split('T')[0];
+const audioHours = parseFloat(log.audioHours) || 0;
+allWorkedDates.add(dateString);
+// --- Month Group ---
+if (!monthGroups.has(monthKey)) {
+monthGroups.set(monthKey, { dateGroups: new Map(), totalAH: 0, workedDates: new Set() });
+}
+const monthGroup = monthGroups.get(monthKey);
+monthGroup.totalAH += audioHours;
+monthGroup.workedDates.add(dateString);
+// --- Date Group ---
+if (!monthGroup.dateGroups.has(dateKey)) {
+// FIXED BUG: Must use monthGroup.dateGroups.set()
+monthGroup.dateGroups.set(dateKey, { entries: [], totalAH: 0 });
+}
+const dateGroup = monthGroup.dateGroups.get(dateKey);
+dateGroup.totalAH += audioHours;
+dateGroup.entries.push({ log, originalIndex });
+});
+// 3. Update Footer totals based on the filtered data (FIXED)
+DOM.totalAH.textContent = totalAH;
+DOM.totalFilesFooter.textContent = totalFiles;
+DOM.totalWorkedDays.textContent = allWorkedDates.size;
+if (!logsToDisplay.length){
+DOM.logDisplay.innerHTML = '<p class="px-5 py-3">No files found matching this filter.</p>';
+return;
+}
+// 4. Build HTML for each group (ALL CLOSED BY DEFAULT)
+let finalHtml = "";
+for (const [month, monthGroup] of monthGroups.entries()) {
+const workedDays = monthGroup.workedDates.size;
+const filesInMonth = Array.from(monthGroup.dateGroups.values()).reduce((sum, group) => sum + group.entries.length, 0);
+// Month Details (No 'open' attribute)
+finalHtml += `<details class="month-group-details">`;
+finalHtml += `
+<summary class="month-group-summary">
+<div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+<span class="month-group-title">${month}</span>
+<span class="stat-green text-base">
+| Total Work Days: ${workedDays}
+</span>
+<span class="stat-blue text-base">
+| Total Files: ${filesInMonth}
+</span>
+<span class="stat-pink text-base">
+| Total AH: ${monthGroup.totalAH.toFixed(2)}
+</span>
+</div>
+<i data-lucide="chevron-right" class="group-icon w-6 h-6"></i>
+</summary>
+`;
+for (const [date, dateGroup] of monthGroup.dateGroups.entries()) {
+// Date Details (No 'open' attribute)
+finalHtml += `<details class="log-group-details">`;
+// Create the <summary> (the clickable header)
+finalHtml += `
+<summary class="log-group-summary">
+<div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+<span>
+${date}
+<span class="font-medium text-indigo-600">
+| Total Files: ${dateGroup.entries.length}
+| Total AH: ${dateGroup.totalAH.toFixed(2)}
+</span>
+</span>
+</div>
+<i data-lucide="chevron-right" class="group-icon w-5 h-5"></i>
+</summary>
+`;
+// Create the content div
+finalHtml += `<div class="log-group-content">`;
+// Map over the entries *for this date*
+const entriesHtml = dateGroup.entries.map(({ log: l, originalIndex: i }) => {
+const fileType = (l.fileType || 'live').toUpperCase();
+// Custom display for N/A or 00:00:00
+const formatTimeDisplay = (time, onTime) => {
+if (time === '00:00:00') return '<span class="text-sm text-gray-500 font-medium">N/A</span>';
+return `<div class="font-bold ${onTime?'text-green-600':'text-red-600'}">${onTime?'  ✅  ':'  ⚠️  '} ${time}</div>`;
+};
+const formatTimestampDisplay = (ts) => ts ? formatTimestamp(ts) : 'N/A';
+// FR Display
+const frDisplay = formatTimeDisplay(l.frTime, l.frOnTime);
+// SV/SV+HP Display
+const isHp = l.fileType === 'hp';
+const isAiera = l.fileType === 'aiera';
+const svTargetLabel = isAiera ? 'Target: 3.0x' : (isHp ? 'N/A' : 'Target: 1.5x');
+const svColumnHtml = isHp ?
+`<div class="text-center text-sm text-gray-500 font-medium">N/A</div>` :
+`<div class="text-center text-sm space-y-1">${formatTimeDisplay(l.svTime, l.svOnTime)}
+<div class="text-2xs text-gray-500 font-mono">${l.svTargetTime === 'N/A' ? svTargetLabel : `Target: ${l.svTargetTime}`}</div>
+<div class="text-2xs text-gray-400 mt-2">Start: ${formatTimestampDisplay(l.svStartedTimestamp)}</div>
+<div class="text-2xs text-gray-400">End: ${formatTimestampDisplay(l.svEndedTimestamp)}</div></div>`;
+// Overall Display
+const overallDisplay = formatTimeDisplay(l.overallTime, l.overallOnTime);
+// The log item itself. Note: using original 'i' for delete/edit
+return `
+<div class="log-item grid grid-cols-[2.5fr_1.5fr_1.5fr_1.5fr] gap-4 py-4 px-5 items-start relative">
+<button onclick="deleteLog(${i})" class="delete-btn absolute top-3 right-12"><i data-lucide="x" class="w-4 h-4"></i></button>
+<button onclick="openEditModal(${i})" class="edit-btn absolute top-3 right-2"><i data-lucide="edit-2" class="w-4 h-4"></i></button> <div class="text-sm font-medium space-y-1">
+<div class="font-bold text-gray-800">${l.fileName||'Unnamed File'}</div>
+<div class="text-xs text-indigo-700 font-mono font-bold">File Type: ${fileType}</div>
+<div class="text-xs text-gray-500 font-mono">Date: ${formatLogDate(l.logDateTimestamp || l.frStartedTimestamp)}</div>
+<div class="text-xs text-gray-500 font-mono">Duration: ${secondsToTime(l.audioLengthSeconds)}</div>
+<div class="text-xs text-blue-600 font-mono">AH: ${l.audioHours}</div>
+</div>
+<div class="text-center text-sm space-y-1">${frDisplay}
+<div class="text-2xs text-gray-500 font-mono">Target: ${l.frTargetTime}</div>
+<div class="text-2xs text-gray-400 mt-2">Start: ${formatTimestampDisplay(l.frStartedTimestamp)}</div>
+<div class="text-2xs text-gray-400">End: ${formatTimestampDisplay(l.frEndedTimestamp)}</div>
+</div>
+${svColumnHtml}
+<div class="text-center text-sm space-y-1">${overallDisplay}
+<div class="text-2xs text-gray-500 font-mono">Target: ${l.overallTargetTime}</div>
+<div class="text-2xs text-gray-400 mt-2">Start: ${formatTimestampDisplay(l.frStartedTimestamp)}</div>
+<div class="text-2xs text-gray-400">End: ${formatTimestampDisplay(l.svEndedTimestamp || l.frEndedTimestamp)}</div></div>
+</div>`;
+}).join('');
+finalHtml += entriesHtml;
+finalHtml += `</div></details>`; // Close DATE group
+}
+finalHtml += `</details>`; // Close MONTH group
+}
+DOM.logDisplay.innerHTML = finalHtml;
+lucide.createIcons();
+}
+// === MODIFIED RESET STATE ===
+function resetState(){
+stopMainTimer();
+clearRecoveryData();
+STATE.frStartTime = STATE.frEndTime = STATE.svStartTime = STATE.svEndTime = null;
+STATE.frStartedTimestamp = STATE.frEndedTimestamp = STATE.svStartedTimestamp = STATE.svEndedTimestamp = null;
+STATE.currentStopwatchSeconds = {fr:0,sv:0,overall:0};
+DOM.fileNameInput.value = '';
+DOM.audioInput.value = '00:00:00';
+DOM.audioError.classList.add('hidden');
+// This function now handles all UI switching
+toggleMode(DOM.fileType.value);
+// This will set targets based on the (now reset) audio input
+handleAudioInput(null, true);
+// But if we're in HP mode, we need to re-set the fixed target
+if (STATE.fileType === 'hp') {
+const hpTargetSeconds = 5400;
+STATE.tatTargets = { fr: hpTargetSeconds, sv: 0, overall: hpTargetSeconds };
+DOM.hpFrTime.textContent = secondsToTime(hpTargetSeconds);
+DOM.hpFrTarget.textContent = `Target: ${secondsToTime(hpTargetSeconds)}`;
+}
+}
+// === AUDIO INPUT ===
+function handleAudioInput(e,force=false){
+// Don't run this logic if we are in HP mode
+// (HP mode doesn't use audio length for targets)
+if (STATE.fileType === 'hp' && !force) {
+// We still need to update the audioLengthSeconds state for logging
+const val = DOM.audioInput.value.trim();
+const valid = val.match(/^\d{2}:\d{2}:\d{2}$/);
+STATE.audioLengthSeconds = valid ? timeToSeconds(val) : 0;
+return; // Exit without updating targets
+}
+const val = DOM.audioInput.value.trim();
+const valid = val.match(/^\d{2}:\d{2}:\d{2}$/);
+const sec = valid ? timeToSeconds(val) : 0;
+if (valid||force){ DOM.audioError.classList.add('hidden'); updateTargets(sec); }
+else { DOM.audioError.classList.remove('hidden'); updateTargets(0); }
+}
+// === TOGGLE VIEW ===
+DOM.toggleCountdown.addEventListener('click',()=>{
+STATE.viewMode='countdown';
+DOM.toggleCountdown.classList.add('active');
+DOM.toggleStopwatch.classList.remove('active');
+updateDisplay();
+});
+DOM.toggleStopwatch.addEventListener('click',()=>{
+STATE.viewMode='stopwatch';
+DOM.toggleStopwatch.classList.add('active');
+DOM.toggleCountdown.classList.remove('active');
+updateDisplay();
+});
+// === NOTES, EXPORT, INIT ===
+function showMessage(txt,err=false){
+DOM.messageText.textContent=txt;
+DOM.messageBox.className=`p-2 ${err?'bg-red-100 border border-red-400 text-red-700':'bg-green-100 border border-green-400 text-green-700'} rounded-lg mb-2`;
+DOM.messageBox.classList.remove('hidden');
+setTimeout(()=>DOM.messageBox.classList.add('hidden'),3000);
+}
+//      ⭐⭐⭐      NEW SPEAKER MESSAGE FUNCTION      ⭐⭐⭐
+function showSpeakerMessage(txt,err=false){
+DOM.speakerMessageText.textContent=txt;
+DOM.speakerMessageBox.className=`p-2 ${err?'bg-red-100 border border-red-400 text-red-700':'bg-green-100 border border-green-400 text-green-700'} rounded-lg mb-2`;
+DOM.speakerMessageBox.style.display = 'block'; // Use display instead of hidden class
+DOM.speakerMessageBox.classList.remove('hidden'); // Remove just in case
+setTimeout(()=> {
+DOM.speakerMessageBox.style.display = 'none';
+}, 3000);
+}
+function updateNotesButtons(){ DOM.undoBtn.disabled=NOTES_STATE.historyIndex===0; DOM.redoBtn.disabled=NOTES_STATE.historyIndex===NOTES_STATE.history.length-1; }
+function saveNotesState(){
+if (DOM.notesArea.value===NOTES_STATE.history[NOTES_STATE.historyIndex]) return;
+if (NOTES_STATE.historyIndex < NOTES_STATE.history.length-1) NOTES_STATE.history = NOTES_STATE.history.slice(0,NOTES_STATE.historyIndex+1);
+NOTES_STATE.history.push(DOM.notesArea.value);
+NOTES_STATE.historyIndex = NOTES_STATE.history.length-1;
+if (NOTES_STATE.history.length>NOTES_STATE.maxHistory){ NOTES_STATE.history.shift(); NOTES_STATE.historyIndex--; }
+localStorage.setItem('fd-notes',DOM.notesArea.value);
+updateNotesButtons();
+}
+function initNotes(){
+const saved = localStorage.getItem('fd-notes');
+if (saved!==null){ DOM.notesArea.value=saved; NOTES_STATE.history=[saved]; NOTES_STATE.historyIndex=0; }
+DOM.notesArea.addEventListener('input',()=>{ if(!NOTES_STATE.isTyping){ NOTES_STATE.isTyping=true; setTimeout(()=>{saveNotesState();NOTES_STATE.isTyping=false;},500); }});
+DOM.undoBtn.onclick=()=>{ if(NOTES_STATE.historyIndex>0){ NOTES_STATE.historyIndex--; DOM.notesArea.value=NOTES_STATE.history[NOTES_STATE.historyIndex]; localStorage.setItem('fd-notes',DOM.notesArea.value); updateNotesButtons(); }};
+DOM.redoBtn.onclick=()=>{ if(NOTES_STATE.historyIndex<NOTES_STATE.history.length-1){ NOTES_STATE.historyIndex++; DOM.notesArea.value=NOTES_STATE.history[NOTES_STATE.historyIndex]; localStorage.setItem('fd-notes',DOM.notesArea.value); updateNotesButtons(); }};
+DOM.clearBtn.onclick=()=>{ if(DOM.notesArea.value.trim()){ DOM.notesArea.value=''; saveNotesState(); showMessage('Notepad cleared.',false); } else showMessage('Already empty.',true); };
+DOM.copyBtn.onclick=()=>{ if(DOM.notesArea.value){ DOM.notesArea.select(); document.execCommand('copy'); showMessage('Copied!',false); } else showMessage('Nothing to copy.',true); };
+}
+// ===        🚀        SPEAKER DB FUNCTIONS ===
+function saveSpeakers() {
+localStorage.setItem('fd-speakers', JSON.stringify(STATE.speakers));
+}
+//        🚀        UPDATED RENDER FUNCTION
+function renderSpeakers(filter = '') {
+const lowerFilter = filter.toLowerCase();
+let speakersToShow;
+let message = '';
+if (filter === '') {
+// DEFAULT (NO SEARCH) - Show preview
+if (STATE.speakers.length === 0) {
+DOM.speakerList.innerHTML = `<p class="text-sm text-gray-500 text-center italic">No speakers added yet. Use the "Add" button to build your list.</p>`;
+return;
+}
+// Get first 20 alphabetical speakers
+speakersToShow = STATE.speakers.slice(0, 20);
+const previewCount = speakersToShow.length;
+const s = previewCount === 1 ? '' : 's';
+// Set the new message
+const totalSpeakers = STATE.speakers.length;
+const totalS = totalSpeakers === 1 ? 'speaker' : 'speakers';
+const previewS = previewCount === 1 ? 'speaker' : 'speakers';
+message = `<p class="text-sm text-gray-500 text-center italic mt-2 mb-2">Showing a preview of ${previewCount} ${previewS}. You have ${totalSpeakers} ${totalS} logged.
+Start typing to search...</p>`;
+} else {
+// USER IS SEARCHING - Show filtered results
+speakersToShow = STATE.speakers.filter(s => s.toLowerCase().includes(lowerFilter));
+if (speakersToShow.length === 0) {
+DOM.speakerList.innerHTML = `<p class="text-sm text-gray-500 text-center italic">No speakers found for "${filter}".</p>`;
+return;
+}
+// No message needed when showing search results
+}
+// --- Render the `speakersToShow` list ---
+const listHtml = speakersToShow.map((speaker) => {
+// We need the *original* index from STATE.speakers for deletion to work
+const originalIndex = STATE.speakers.findIndex(s => s === speaker);
+return `
+<div class="speaker-item">
+<span>${speaker}</span>
+<div class="btn-group">
+<button onclick="copySpeaker(${originalIndex})" class="speaker-btn" title="Copy">
+<i data-lucide="copy" class="w-4 h-4"></i>
+</button>
+<button onclick="editSpeaker(${originalIndex})" class="speaker-btn edit-btn" title="Edit">
+<i data-lucide="edit-2" class="w-4 h-4"></i>
+</button>
+<button onclick="deleteSpeaker(${originalIndex})" class="speaker-btn delete-btn" title="Delete">
+<i data-lucide="trash-2" class="w-4 h-4"></i>
+</button>
+</div>
+</div>
+`;
+ 
+}).join('');
+DOM.speakerList.innerHTML = message + listHtml; // Prepend the message
+lucide.createIcons();
+}
+window.copySpeaker = (index) => {
+const speaker = STATE.speakers[index];
+navigator.clipboard.writeText(speaker).then(() => {
+showSpeakerMessage('Speaker copied to clipboard!', false);
+}, () => {
+showSpeakerMessage('Failed to copy.', true);
+});
+}
+//        🚀        NEW EDIT SPEAKER FUNCTION
+window.editSpeaker = (index) => {
+const oldSpeaker = STATE.speakers[index];
+const newSpeaker = prompt('Edit speaker name:', oldSpeaker);
+if (newSpeaker && newSpeaker.trim() !== '' && newSpeaker.trim() !== oldSpeaker) {
+STATE.speakers[index] = newSpeaker.trim();
+STATE.speakers.sort(); // Re-sort the list
+renderSpeakers(DOM.speakerSearch.value);
+showSpeakerMessage('Speaker updated!', true);
+}
+}
+window.deleteSpeaker = (index) => {
+const speaker = STATE.speakers[index];
+if (confirm(`Are you sure you want to delete this speaker?\n\n${speaker}`)) {
+STATE.speakers.splice(index, 1);
+saveSpeakers();
+renderSpeakers(DOM.speakerSearch.value);
+showSpeakerMessage('Speaker deleted.', false);
+}
+}
+function exportSpeakers() {
+if (STATE.speakers.length === 0) {
+showSpeakerMessage('No speakers to export.', true);
+return;
+}
+const data = JSON.stringify(STATE.speakers, null, 2);
+const blob = new Blob([data], {type: 'application/json'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'fd_speakers.json';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
+function importSpeakers(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = (e) => {
+try {
+const newSpeakers = JSON.parse(e.target.result);
+if (Array.isArray(newSpeakers) && newSpeakers.every(s => typeof s === 'string')) {
+STATE.speakers = [...new Set([...STATE.speakers, ...newSpeakers])]; // Merge and remove duplicates
+STATE.speakers.sort();
+saveSpeakers();
+renderSpeakers(DOM.speakerSearch.value);
+showSpeakerMessage('Speakers imported successfully!', false);
+} else {
+showSpeakerMessage('Invalid file format. Must be a JSON array of strings.', true);
+}
+} catch (err) {
+showSpeakerMessage('Failed to read or parse file.', true);
+console.error(err);
+}
+// Reset input so you can import the same file again
+DOM.speakerImportInput.value = '';
+};
+reader.readAsText(file);
+}
+// ===       🚀       DASHBOARD FUNCTIONS ===
+function setOnTimeColor(element, percent) {
+element.classList.remove('ontime-ok', 'ontime-warn', 'ontime-bad');
+if (percent >= 95) {
+element.classList.add('ontime-ok');
+} else if (percent >= 85) {
+element.classList.add('ontime-warn');
+} else {
+element.classList.add('ontime-bad');
+}
+}
+function resetDashboard() {
+DOM.statTotalFiles.textContent = '0';
+DOM.statTotalAh.textContent = '0.00';
+DOM.statFileTypes.innerHTML = `
+<span class="file-type-live">LIVE: 0</span> |
+<span class="file-type-batch">BATCH: 0</span> |
+<span class="file-type-hp">HP: 0</span> |
+<span class="file-type-aiera">AIERA: 0</span>
+`;
+DOM.statOntimeFr.textContent = 'N/A';
+DOM.statOntimeSv.textContent = 'N/A';
+DOM.statOntimeOverall.textContent = 'N/A';
+DOM.statDetailsFr.innerHTML = ''; // Clear details
+DOM.statDetailsSv.innerHTML = ''; // Clear details
+DOM.statDetailsOverall.innerHTML = ''; // Clear details
+setOnTimeColor(DOM.statOntimeFr, 100);
+setOnTimeColor(DOM.statOntimeSv, 100);
+setOnTimeColor(DOM.statOntimeOverall, 100);
+}
+function updateDashboard() {
+const logs = STATE.loggedFiles;
+if (logs.length === 0) {
+resetDashboard();
+return;
+}
+const totalFiles = logs.length;
+const totalAH = logs.reduce((s,l)=>s+parseFloat(l.audioHours),0).toFixed(2);
+//    ⭐    --- START OF NEW CODE BLOCK ---    ⭐
+// 1. Create counters for all types and statuses
+const tatCounts = {
+fr: { within: { live: 0, batch: 0, hp: 0, aiera: 0 }, exceeded: { live: 0, batch: 0, hp: 0, aiera: 0 } },
+sv: { within: { live: 0, batch: 0, hp: 0, aiera: 0 }, exceeded: { live: 0, batch: 0, hp: 0, aiera: 0 } },
+overall: { within: { live: 0, batch: 0, hp: 0, aiera: 0 }, exceeded: { live: 0, batch: 0, hp: 0, aiera: 0 } }
+};
+// 2. Loop through logs and count everything
+logs.forEach(log => {
+const type = log.fileType || 'live';
+// --- FR Counts ---
+if (log.frOnTime) {
+tatCounts.fr.within[type]++;
+} else {
+tatCounts.fr.exceeded[type]++;
+}
+// --- Overall Counts ---
+if (log.overallOnTime) {
+tatCounts.overall.within[type]++;
+} else {
+tatCounts.overall.exceeded[type]++;
+}
+// --- SV Counts (Must ignore HP files) ---
+if (type !== 'hp') {
+if (log.svOnTime) {
+tatCounts.sv.within[type]++;
+} else {
+tatCounts.sv.exceeded[type]++;
+}
+}
+});
+// 3. Helper function to build the HTML for FR and Overall
+const buildDetailsHtml = (counts) => {
+//    ⭐    Calculate totals first
+const totalWithin = counts.within.live + counts.within.batch + counts.within.hp + counts.within.aiera;
+const totalExceeded = counts.exceeded.live + counts.exceeded.batch + counts.exceeded.hp + counts.exceeded.aiera;
+//    ⭐    Determine "File" or "Files"
+const withinLabel = totalWithin === 1 ? 'File' : 'Files';
+const exceededLabel = totalExceeded === 1 ? 'File' : 'Files';
+return `
+<div class="text-green-600 font-medium text-center">
+${totalWithin} ${withinLabel} Within TAT:
+<span class="file-type-live">${counts.within.live} <span class="file-type-live">Live</span></span> |
+<span class="file-type-batch">${counts.within.batch} <span class="file-type-batch">Batch</span></span> |
+<span class="file-type-hp">${counts.within.hp} <span class="file-type-hp">HP</span></span> |
+<span class="file-type-aiera">${counts.within.aiera} <span class="file-type-aiera">Aiera</span></span>
+</div>
+<div class="text-red-600 font-medium text-center">
+${totalExceeded} ${exceededLabel} Exceed TAT:
+<span class="file-type-live">${counts.exceeded.live} <span class="file-type-live">Live</span></span> |
+<span class="file-type-batch">${counts.exceeded.batch} <span class="file-type-batch">Batch</span></span> |
+<span class="file-type-hp">${counts.exceeded.hp} <span class="file-type-hp">HP</span></span> |
+<span class="file-type-aiera">${counts.exceeded.aiera} <span class="file-type-aiera">Aiera</span></span>
+</div>
+`;
+};
+// 4. Helper function for SV (which excludes HP)
+const buildSvDetailsHtml = (counts) => {
+//    ⭐    Calculate totals first
+const totalWithin = counts.within.live + counts.within.batch + counts.within.aiera;
+const totalExceeded = counts.exceeded.live + counts.exceeded.batch + counts.exceeded.aiera;
+//    ⭐    Determine "File" or "Files"
+const withinLabel = totalWithin === 1 ? 'File' : 'Files';
+const exceededLabel = totalExceeded === 1 ? 'File' : 'Files';
+return `
+<div class="text-green-600 font-medium text-center">
+${totalWithin} ${withinLabel} Within TAT:
+<span class="file-type-live">${counts.within.live} <span class="file-type-live">Live</span></span> |
+<span class="file-type-batch">${counts.within.batch} <span class="file-type-batch">Batch</span></span> |
+<span class="file-type-aiera">${counts.within.aiera} <span class="file-type-aiera">Aiera</span></span>
+</div>
+<div class="text-red-600 font-medium text-center">
+${totalExceeded} ${exceededLabel} Exceed TAT:
+<span class="file-type-live">${counts.exceeded.live} <span class="file-type-live">Live</span></span> |
+<span class="file-type-batch">${counts.exceeded.batch} <span class="file-type-batch">Batch</span></span> |
+<span class="file-type-aiera">${counts.exceeded.aiera} <span class="file-type-aiera">Aiera</span></span>
+</div>
+`;
+};
+// 5. Inject the new HTML into the divs we made
+DOM.statDetailsFr.innerHTML = buildDetailsHtml(tatCounts.fr);
+DOM.statDetailsOverall.innerHTML = buildDetailsHtml(tatCounts.overall);
+DOM.statDetailsSv.innerHTML = buildSvDetailsHtml(tatCounts.sv);
+//    ⭐    --- END OF NEW CODE BLOCK ---    ⭐
+//       ⭐⭐⭐      START: EDITED DASHBOARD LOGIC      ⭐⭐⭐
+const counts = { live: 0, batch: 0, hp: 0, aiera: 0 };
+logs.forEach(l => {
+const type = l.fileType || 'live'; // Default old logs to 'live'
+if (counts[type] !== undefined) {
+counts[type]++;
+}
+});
+// Use innerHTML to add color spans
+DOM.statFileTypes.innerHTML = `
+<span class="file-type-live">LIVE: ${counts.live}</span> |
+<span class="file-type-batch">BATCH: ${counts.batch}</span> |
+<span class="file-type-hp">HP: ${counts.hp}</span> |
+<span class="file-type-aiera">AIERA: ${counts.aiera}</span>
+`;
+//       ⭐⭐⭐      END: EDITED DASHBOARD LOGIC      ⭐⭐⭐
+const onTimeFR = logs.filter(l => l.frOnTime).length;
+const onTimeOverall = logs.filter(l => l.overallOnTime).length;
+// For SV, we must ignore HP files
+const nonHpLogs = logs.filter(l => l.fileType !== 'hp');
+const nonHpFilesCount = nonHpLogs.length;
+const onTimeSV = nonHpLogs.filter(l => l.svOnTime).length;
+DOM.statTotalFiles.textContent = totalFiles;
+DOM.statTotalAh.textContent = totalAH;
+//       ⭐⭐⭐      REMOVED Avg.
+// FR Time logic line      ⭐⭐⭐
+const frPercent = Math.round((onTimeFR / totalFiles) * 100);
+DOM.statOntimeFr.textContent = `${frPercent}%`;
+setOnTimeColor(DOM.statOntimeFr, frPercent);
+const overallPercent = Math.round((onTimeOverall / totalFiles) * 100);
+DOM.statOntimeOverall.textContent = `${overallPercent}%`;
+setOnTimeColor(DOM.statOntimeOverall, overallPercent);
+if (nonHpFilesCount > 0) {
+const svPercent = Math.round((onTimeSV / nonHpFilesCount) * 100);
+DOM.statOntimeSv.textContent = `${svPercent}%`;
+setOnTimeColor(DOM.statOntimeSv, svPercent);
+} else {
+DOM.statOntimeSv.textContent = 'N/A';
+setOnTimeColor(DOM.statOntimeSv, 100); // Default to 'ok' color
+}
+}
+// ===        🚀        LOG IMPORT/EXPORT FUNCTIONS (FIXED) ===
+function exportLogs() {
+if (STATE.loggedFiles.length === 0) {
+showLogToast('No logs to export.', false);
+return;
+}
+const data = JSON.stringify(STATE.loggedFiles, null, 2);
+const blob = new Blob([data], {type: 'application/json'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'fd_logs.json';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
+function importLogs(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = (e) => {
+try {
+const newLogs = JSON.parse(e.target.result);
+if (Array.isArray(newLogs)) {
+// Create a set of existing log keys to prevent duplicates
+const existingKeys = new Set(STATE.loggedFiles.map(log =>
+(log.logDateTimestamp || log.frStartedTimestamp) + log.fileName
+));
+const mergedLogs = [...STATE.loggedFiles];
+let importCount = 0;
+newLogs.forEach(log => {
+const key = (log.logDateTimestamp || log.frStartedTimestamp) + log.fileName;
+if (!existingKeys.has(key)) {
+mergedLogs.push(log);
+importCount++;
+}
+});
+STATE.loggedFiles = mergedLogs;
+runLogMigration(); // Fix any missing timestamps in imported data
+STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp || 0));
+saveLogs();
+updateLogDisplay();
+updateDashboard();
+populateFilterOptions(); //     ⭐⭐⭐     UPDATE FILTERS
+showLogToast(`${importCount} new log(s) imported successfully!`, true);
+} else {
+showLogToast('Invalid file format. Must be a JSON array.', true);
+}
+} catch (err) {
+showLogToast('Failed to read or parse file.', true);
+console.error(err);
+}
+// Reset input so you can import the same file again
+DOM.logImportInput.value = '';
+};
+reader.readAsText(file);
+}
+// ===       🚀       MIGRATION FUNCTION ===
+function runLogMigration() {
+let needsSave = false;
+STATE.loggedFiles.forEach(log => {
+if (!log.logDateTimestamp) {
+needsSave = true;
+// If it's an old timed log, use its start time
+if (log.frStartedTimestamp) {
+log.logDateTimestamp = log.frStartedTimestamp;
+} else {
+// If it's a very old or broken log, default to 0
+log.logDateTimestamp = 0;
+}
+}
+});
+if (needsSave) {
+console.log("Migrating old logs...");
+saveLogs();
+}
+}
+// ===     ⭐⭐⭐     NEW FILTER FUNCTIONS (FIXED)     ⭐⭐⭐     ===
+function populateFilterOptions() {
+const uniqueYears = new Set();
+const uniqueMonths = new Set();
+const monthOrder = [
+"JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+"JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+];
+STATE.loggedFiles.forEach(log => {
+const ts = log.logDateTimestamp || log.frStartedTimestamp;
+if (ts) {
+const d = new Date(ts);
+uniqueYears.add(d.getFullYear().toString());
+uniqueMonths.add(d.toLocaleString('en-US', { month: 'long' }));
+}
+});
+// Sort and populate Years
+DOM.filterYearSelect.innerHTML = '<option value="all">All Years</option>';
+[...uniqueYears].sort((a, b) => b - a).forEach(year => { // Sort descending
+DOM.filterYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+});
+// Sort and populate Months
+DOM.filterMonthSelect.innerHTML = '<option value="all">All Months</option>';
+[...uniqueMonths].sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b)).forEach(month => { // Sort by calendar order
+DOM.filterMonthSelect.innerHTML += `<option value="${month}">${month}</option>`;
+});
+// Restore selection
+DOM.filterYearSelect.value = STATE.filterYear;
+DOM.filterMonthSelect.value = STATE.filterMonth;
+}
+function handleFilterChange() {
+// Clear Year/Month selection if Date Range is used
+if (DOM.dateRangeStart.value || DOM.dateRangeEnd.value) {
+STATE.filterYear = 'all';
+STATE.filterMonth = 'all';
+DOM.filterYearSelect.value = 'all';
+DOM.filterMonthSelect.value = 'all';
+} else {
+STATE.filterYear = DOM.filterYearSelect.value;
+STATE.filterMonth = DOM.filterMonthSelect.value;
+}
+updateLogDisplay(); // Re-render the log display with the filter
+}
+function clearFilters() {
+STATE.filterYear = 'all';
+STATE.filterMonth = 'all';
+DOM.filterYearSelect.value = 'all';
+DOM.filterMonthSelect.value = 'all';
+//   ⭐   NEW: Clear Date Range Inputs
+DOM.dateRangeStart.value = '';
+DOM.dateRangeEnd.value = '';
+updateLogDisplay();
+}
+/* ==============================
+FINAL CSV EXPORT: Variance in HH:MM:SS + LOCAL TIME FILENAME
+============================== */
+// === MODIFIED CSV EXPORT ===
+DOM.exportCSVBtn.onclick = () => {
+if (!STATE.loggedFiles.length) {
+showLogToast('No logs to export.', false);
+return;
+}
+//       🚀       NEW formatVariance function
+// Returns "00:10:00" if on-time, "-00:05:00" if overdue
+const formatVariance = (actualSec, targetSec) => {
+const diff = targetSec - actualSec; // This is "time left"
+const abs = Math.abs(diff);
+const sign = diff < 0 ? '-' : ''; // Only add sign if overdue
+const h = Math.floor(abs / 3600);
+const m = Math.floor((abs % 3600) / 60);
+const s = abs % 60;
+return `${sign}${[h, m, s].map(v => v.toString().padStart(2, '0')).join(':')}`;
+};
+const data = STATE.loggedFiles.map(l => {
+const fileType = l.fileType || 'live';
+// Create 'N/A' data for HP files
+const isHP = fileType === 'hp';
+const svTime = isHP ? 'N/A' : l.svTime;
+const svTarget = isHP ? 'N/A' : l.svTargetTime;
+const svStatus = isHP ? 'N/A' : (l.svOnTime ? 'ON TIME' : 'OVERDUE');
+const svVariance = isHP ? 'N/A' : formatVariance(l.svTimeSec, l.svTargetSec);
+const svStarted = isHP ? 'N/A' : formatTimestamp(l.svStartedTimestamp);
+const svEnded = isHP ? 'N/A' : formatTimestamp(l.svEndedTimestamp);
+return {
+'File Name': l.fileName,
+'File Type': fileType.toUpperCase(), // ADDED COLUMN
+'Log Date': formatLogDate(l.logDateTimestamp || l.frStartedTimestamp),
+'Audio Length (HH:MM:SS)': secondsToTime(l.audioLengthSeconds),
+'Audio Hours (AH)': l.audioHours,
+'FR Time Taken (HH:MM:SS)': l.frTime,
+'FR Target (HH:MM:SS)': l.frTargetTime,
+'FR Status': l.frOnTime ? 'ON TIME' : 'OVERDUE',
+'FR Variance (HH:MM:SS)': formatVariance(l.frTimeSec, l.frTargetSec),
+'SV Time Taken (HH:MM:SS)': svTime, // Use variable
+'SV Target (HH:MM:SS)': svTarget, // Use variable
+'SV Status': svStatus, // Use variable
+'SV Variance (HH:MM:SS)': svVariance, // Use variable
+'Overall Time Taken (HH:MM:SS)': l.overallTime,
+'Overall Target (HH:MM:SS)': l.overallTargetTime,
+'Overall Status': l.overallOnTime ? 'ON TIME' : 'OVERDUE',
+'Overall Variance (HH:MM:SS)': formatVariance(l.overallTimeSec, l.overallTargetSec),
+'FR Started': formatTimestamp(l.frStartedTimestamp),
+'FR Ended': formatTimestamp(l.frEndedTimestamp),
+'SV Started': svStarted, // Use variable
+'SV Ended': svEnded // Use variable
+}
+});
+const csv = Papa.unparse(data);
+const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+const now = new Date();
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0');
+const day = String(now.getDate()).padStart(2, '0');
+const hour = String(now.getHours()).padStart(2, '0');
+const minute = String(now.getMinutes()).padStart(2, '0');
+const localTimeStr = `${year}-${month}-${day}_${hour}-${minute}`;
+a.download = `FD_Editor_Logs_${localTimeStr}.csv`;
+a.style.visibility = 'hidden';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+};
+DOM.clearAllLogsBtn.onclick = clearAllLogs;
+// ===    ⭐⭐⭐    NEW: MODAL OPEN/CLOSE HANDLERS    ⭐⭐⭐    ===
+function openManualLogModal() {
+  STATE.editingLogIndex = null; // Ensure we are in "new" mode
+  // 1. Set titles and button
+  DOM.modalTitle.textContent = 'Manual File Log';
+  DOM.modalDescription.textContent = 'Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.';
+  DOM.modalSaveBtn.textContent = 'Save Log';
+  // 2. Clear and enable all fields
+  DOM.modalFileName.value = '';
+  DOM.modalFileType.innerHTML = `
+<option value="live">Live File</option>
+<option value="batch">Batch File</option>
+<option value="hp">HP File</option>
+<option value="aiera">Aiera File</option>
+`;
+  DOM.modalFileType.value = 'live';
+  DOM.modalLogDate.value = new Date().toISOString().split('T')[0];
+  DOM.modalAudioLength.value = '00:00:00';
+  DOM.modalFrTime.value = '00:00:00';
+  DOM.modalSvTime.value = '00:00:00';
+  DOM.modalOverallTime.value = '00:00:00';
+  const allFields = [
+      DOM.modalFileName,
+      DOM.modalFileType,
+      DOM.modalLogDate,
+      DOM.modalAudioLength,
+      DOM.modalFrTime,
+      DOM.modalSvTime,
+      DOM.modalOverallTime
+  ];
+  allFields.forEach(field => field.disabled = false);
+  DOM.modalSvTime.disabled = false;
+  DOM.modalOverallTime.disabled = false;
+  // 3. Open Modal
+  DOM.modalOverlay.classList.add('open');
+}
+function closeModal() {
+STATE.editingLogIndex = null; // Reset editing state
+DOM.modalOverlay.classList.remove('open');
+DOM.modalError.classList.add('hidden');
+}
+// ===       🚀       MODIFIED INIT (FIXED LISTENERS) ===
+window.onload = () => {
+updateLiveClock(); STATE.clockIntervalId = setInterval(updateLiveClock, 1000);
+// --- Load Logs ---
+const savedLogs = localStorage.getItem('fd-logged-files');
+if (savedLogs) {
+try {
+STATE.loggedFiles = JSON.parse(savedLogs);
+runLogMigration(); //       🚀       Run migration to fix old logs
+STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp || 0));
+populateFilterOptions(); //     ⭐⭐⭐     POPULATE FILTERS ON LOAD
+updateLogDisplay();
+updateDashboard(); //       🚀       Update dashboard on load
+} catch (e) { console.error(e); }
+} else {
+populateFilterOptions(); //     ⭐⭐⭐     Must call even if no logs, to show "All"
+}
+// ---       🚀       Load Speakers ---
+const savedSpeakers = localStorage.getItem('fd-speakers');
+if (savedSpeakers) {
+try {
+STATE.speakers = JSON.parse(savedSpeakers);
+STATE.speakers.sort(); // Re-sort loaded speakers
+renderSpeakers();
+} catch (e) { console.error(e); }
+} else {
+renderSpeakers();
+}
+// ---       🚀       Load Crash Recovery Data ---
+const recoveryData = localStorage.getItem('fd-timer-recovery-data');
+if (recoveryData) {
+try {
+const savedState = JSON.parse(recoveryData);
+// Restore the state
+Object.keys(savedState).forEach(key => {
+STATE[key] = savedState[key];
+});
+// Manually update the UI to reflect the restored state
+DOM.fileType.value = STATE.fileType;
+DOM.fileNameInput.value = STATE.fileName;
+DOM.audioInput.value = secondsToTime(STATE.audioLengthSeconds);
+toggleMode(STATE.fileType); // Set the UI to the correct mode
+startMainTimer(); // This calls updateDisplay()
+showLogToast('Timer restored from previous session!', true);
+} catch(e) {
+console.error("Failed to restore timer:", e);
+clearRecoveryData();
+}
+}
+// --- Add Listeners (FIXED) ---
+DOM.audioInput.addEventListener('input', handleAudioInput);
+// Add listeners for ALL buttons
+[
+DOM.btnFRStarted, DOM.btnFREnded, DOM.btnSVStarted, DOM.btnSVEnded, DOM.btnLogAnother,
+DOM.btnHpFrStarted, DOM.btnHpFrEnded, DOM.btnLogAnotherHp,
+DOM.btnAieraFrStarted, DOM.btnAieraFrEnded, DOM.btnAieraSvStarted, DOM.btnAieraSvEnded, DOM.btnLogAnotherAiera
+].forEach(b => {
+if(b) b.addEventListener('click', handleButtonClick)
+});
+// Add listener for the new fileType dropdown
+DOM.fileType.addEventListener('change', (e) => {
+resetState(); // Reset everything when mode changes
+});
+// ===       🚀       ADD MODAL LISTENERS (FIXED) ===
+DOM.manualLogBtn.addEventListener('click', openManualLogModal);
+DOM.modalCancelBtn.addEventListener('click', closeModal);
+DOM.modalOverlay.addEventListener('click', (e) => {
+if (e.target === DOM.modalOverlay) {
+closeModal();
+}
+});
+DOM.modalSaveBtn.addEventListener('click', handleLogModalSave);
+// Logic to toggle modal fields based on file type (FIXED)
+DOM.modalFileType.addEventListener('change', (e) => {
+const isHp = e.target.value === 'hp';
+const isAiera = e.target.value === 'aiera';
+const isHpOrAiera = isHp || isAiera;
+// Check if the overall modal state indicates a timed log (fields are disabled)
+const isTimedLog = DOM.modalLogDate.disabled;
+// This logic only applies to manual logs OR if we are changing the type of an already disabled (timed) log
+if (!isTimedLog) {
+DOM.modalSvTime.disabled = isHpOrAiera;
+DOM.modalOverallTime.disabled = isHpOrAiera;
+if (isHpOrAiera) {
+DOM.modalSvTime.value = '00:00:00';
+DOM.modalOverallTime.value = DOM.modalFrTime.value;
+} else {
+DOM.modalSvTime.disabled = false;
+DOM.modalOverallTime.disabled = false;
+}
+}
+});
+// Auto-copy FR time to Overall time for HP/Aiera mode
+DOM.modalFrTime.addEventListener('input', (e) => {
+const isHpOrAiera = DOM.modalFileType.value === 'hp' || DOM.modalFileType.value === 'aiera';
+// Only auto-copy if the fields are not disabled due to being a timed log
+if (isHpOrAiera && DOM.modalOverallTime.disabled === false) {
+DOM.modalOverallTime.value = e.target.value;
+}
+});
+// ===       🚀       ADD SPEAKER DB LISTENERS (FIXED) ===
+DOM.addSpeakerBtn.addEventListener('click', () => {
+const newSpeaker = prompt('Enter the full speaker name and title:', 'Speaker Name [Title] (Company)');
+if (newSpeaker && newSpeaker.trim() !== '') {
+STATE.speakers.push(newSpeaker.trim());
+STATE.speakers.sort();
+saveSpeakers();
+renderSpeakers(DOM.speakerSearch.value);
+showSpeakerMessage('Speaker added!', false);
+}
+});
+DOM.speakerSearch.addEventListener('input', (e) => {
+renderSpeakers(e.target.value);
+});
+DOM.exportSpeakerBtn.addEventListener('click', exportSpeakers);
+DOM.importSpeakerBtn.addEventListener('click', () => DOM.speakerImportInput.click());
+DOM.speakerImportInput.addEventListener('change', importSpeakers);
+// ===       🚀       ADD LOG IMPORT/EXPORT LISTENERS (FIXED) ===
+DOM.exportLogsBtn.addEventListener('click', exportLogs);
+DOM.importLogsBtn.addEventListener('click', () => DOM.logImportInput.click());
+DOM.logImportInput.addEventListener('change', importLogs);
+// ===     ⭐⭐⭐     ADD DATE RANGE LISTENERS (FIXED)     ⭐⭐⭐     ===
+DOM.dateRangeStart.addEventListener('change', handleFilterChange);
+DOM.dateRangeEnd.addEventListener('change', handleFilterChange);
+// ===     ⭐⭐⭐     ADD FILTER BAR LISTENERS (FIXED)     ⭐⭐⭐     ===
+DOM.filterYearSelect.addEventListener('change', handleFilterChange);
+DOM.filterMonthSelect.addEventListener('change', handleFilterChange);
+DOM.clearFilterBtn.addEventListener('click', clearFilters);
+// ============================
+// Run this only if no recovery data was loaded
+if (!recoveryData) {
+handleAudioInput(null, true);
+toggleMode(DOM.fileType.value); // Set the initial mode based on the dropdown
+}
+initNotes();
+lucide.createIcons();
+};
+ 
+</script>
+</body>
+</html>

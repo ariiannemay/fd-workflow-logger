@@ -3,99 +3,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FD Editor Workflow Timer ⏳</title>
+<title>FD Editor Workflow Timer </title>
 <link rel="icon" type="image/png" href="favicon.png">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+/* SOURCE 1, 2 */
 body {font-family: 'Inter', sans-serif; background-color: #f7f9fb;}
 /* TIMER DISPLAY */
+/* SOURCE 2, 3 */
 .timer-display {font-size: 2.25rem; font-weight: 700; letter-spacing: -0.05em; color: #1e40af; transition: color 0.3s ease;}
 .timer-display.overdue {color: #ef4444;}
 .beep-active {animation:flash .5s infinite alternate;}
 @keyframes flash {from{background:#fca5a5;} to{background:#fef2f2;}}
 /* TARGET CHIPS */
 .target-chip {
-display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem;
+display: inline-block;
+/* SOURCE 4 */
+padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem;
 font-weight: 700; margin-top: 0.25rem; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db;
+/* SOURCE 5 */
 }
 .target-chip.overall {background: #dbeafe; color: #1e40af; border-color: #93c5fd;}
 .target-chip.fr {background: #fef3c7; color: #d97706; border-color: #fbbf24;}
+/* SOURCE 6 */
 .target-chip.sv {background: #ecfccb; color: #65a30d; border-color: #a3e635;}
-/* ⭐⭐⭐ NEW AIERA TARGET CHIP STYLES ⭐⭐⭐ */
+/* NEW AIERA TARGET CHIP STYLES  */
 .target-chip.aiera-total {background: #fbcfe8; color: #be185d; border-color: #f472b6;}
+/* SOURCE 7 */
 .target-chip.aiera-svhp {background: #e9d5ff; color: #7c3aed; border-color: #a78bfa;}
 /* WORKFLOW BUTTONS */
 .workflow-btn {
 padding: .75rem; border-radius: 9999px; box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+/* SOURCE 8 */
 transition: all .3s ease-in-out; font-weight: 800; font-size: 1.125rem; color: white; text-align: center;
-letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: center; justify-content: center;
+letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: center;
+/* SOURCE 9 */
+justify-content: center;
 border: none; white-space: nowrap; cursor: pointer;
 }
-.btn-active-red {background-image: linear-gradient(to right,#f87171,#ef4444); box-shadow: 0 10px 15px -3px rgba(239,68,68,.7); border: 3px solid #fca5a5;}
+.btn-active-red {background-image: linear-gradient(to right,#f87171,#ef4444); box-shadow: 0 10px 15px -3px rgba(239,68,68,.7);
+/* SOURCE 10 */
+border: 3px solid #fca5a5;}
 .btn-completed-dark {background-color:#374151 !important; color:#9ca3af !important; box-shadow:none !important; cursor:not-allowed;}
+/* SOURCE 11 */
 .workflow-btn:enabled, .workflow-btn.btn-fr-started:enabled {background-image: linear-gradient(to right,#60a5fa,#3b82f6); box-shadow: 0 10px 15px -3px rgba(96,165,250,.5);}
 .workflow-btn.btn-sv-started:enabled {background-image: linear-gradient(to right,#38bdf8,#0ea5e9); box-shadow: 0 10px 15px -3px rgba(56,189,248,.5);}
+/* SOURCE 12 */
 .workflow-btn.btn-sv-ended:enabled {background-image: linear-gradient(to right,#1d4ed8,#1e40af); box-shadow: 0 10px 15px -3px rgba(30,64,175,.5);}
-/* ⭐⭐⭐ NEW AIERA COLORS ⭐⭐⭐ */
+/* NEW AIERA COLORS  */
+/* SOURCE 13 */
 .workflow-btn.btn-aiera-started:enabled {background-image: linear-gradient(to right,#f472b6,#ec4899); box-shadow: 0 10px 15px -3px rgba(236,72,153,.5);}
 .workflow-btn.btn-aiera-svhp-started:enabled {background-image: linear-gradient(to right,#a78bfa,#8b5cf6); box-shadow: 0 10px 15px -3px rgba(139,92,246,.5);}
+/* SOURCE 14 */
 .workflow-btn.btn-aiera-svhp-ended:enabled {background-image: linear-gradient(to right,#7c3aed,#6d28d9); box-shadow: 0 10px 15px -3px rgba(109,40,217,.5);}
+/* SOURCE 15 */
 .workflow-btn:disabled {background-color:#e5e7eb; color:#9ca3af; cursor:not-allowed; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,.06); border:none;}
 /* Small font for new workflow buttons */
 .workflow-btn.btn-sm-text {font-size: 0.95rem; letter-spacing: .05em;}
 /* RESET BUTTON */
-#btn-log-another {
-background-color: #fee2e2 !important; color: #dc2626 !important; border: 2px solid #fecaca !important;
-box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06) !important;
-}
+/* SOURCE 16 */
+#btn-log-another { background-color: #fee2e2 !important; color: #dc2626 !important; border: 2px solid #fecaca !important;
+/* SOURCE 17 */
+box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06) !important;}
 #btn-log-another:hover:enabled {background-color: #fecaca !important; transform: translateY(-1px);}
 #btn-log-another:active:enabled {transform: translateY(0);}
 /* FULL-WIDTH TOGGLE PILL */
 .toggle-capsule {
-display: flex; width: 100%; background: #e5e7eb; border-radius: 9999px; padding: 0.25rem;
+display: flex; width: 100%; background: #e5e7eb; border-radius: 9999px;
+/* SOURCE 18 */
+padding: 0.25rem;
 box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
 }
 .toggle-capsule button {
-flex: 1; padding: 0.75rem 1.5rem; border-radius: 9999px; font-size: 1rem; font-weight: 600;
+flex: 1; padding: 0.75rem 1.5rem;
+/* SOURCE 19 */
+border-radius: 9999px; font-size: 1rem; font-weight: 600;
 transition: all 0.2s ease; text-align: center;
 }
-.toggle-capsule button.active {
-background: #3b82f6; color: white; box-shadow: 0 1px 3px 0 rgba(0,0,0,.1);
-}
+/* SOURCE 20 */
+.toggle-capsule button.active { background: #3b82f6; color: white; box-shadow: 0 1px 3px 0 rgba(0,0,0,.1);}
 .toggle-capsule button:not(.active) {
 color: #4b5563; background: transparent;
 }
-.toggle-capsule button:not(.active):hover {
-color: #1f2937; background: #f3f4f6;
-}
+/* SOURCE 21 */
+.toggle-capsule button:not(.active):hover { color: #1f2937; background: #f3f4f6;}
 /* AESTHETIC LOGS*/
 /* ADD THIS TO YOUR EXISTING <style> BLOCK */
 .month-group-title {
 font-size: 1rem;
+/* SOURCE 22 */
 font-weight: 800; /* Bolder than the other elements in the summary */
 color: #111827; /* Near black color */
+/* SOURCE 23 */
 text-transform: uppercase; /* Makes the month text uppercase */
 }
 .stat-green {
 color: #10b981; /* Green-500 equivalent */
 font-weight: 500; /* Not bold */
 }
-.stat-blue {
-color: #3b82f6; /* Blue-500 equivalent */
-font-weight: 500; /* Not bold */
-}
+/* SOURCE 24 */
+.stat-blue { color: #3b82f6; /* Blue-500 equivalent */ font-weight: 500; /* Not bold */}
 .stat-pink {
 color: #ec4899; /* Pink-500 equivalent */
-font-weight: 500; /* Not bold */
+font-weight: 500;
+/* SOURCE 25 */
+/* Not bold */
 }
 /* NOTES */
 #notesArea::-webkit-scrollbar{width:8px;}
 #notesArea::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:4px;}
 #notesArea:hover::-webkit-scrollbar-thumb{background:#9ca3af;}
 #notesArea{resize:vertical; height:100%; min-height:100px;}
+/* SOURCE 26 */
 .notes-panel{display:flex; flex-direction:column; min-height:300px;}
 /* DELETE & EDIT */
 .delete-btn,.edit-btn{@apply p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition;}
@@ -104,15 +127,18 @@ font-weight: 500; /* Not bold */
 /* GORGEOUS TOASTS */
 .toast-container {
 position: relative;
+/* SOURCE 27 */
 width: 100%;
 }
 .toast {
 display: flex; align-items: center; gap: 0.75rem;
 padding: 0.75rem 1rem; margin-bottom: 0.5rem;
 border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem;
+/* SOURCE 28 */
 color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 animation: slideIn 0.4s ease-out, fadeOut 0.5s 2.5s forwards;
 transform: translateX(-100%);
+/* SOURCE 29 */
 opacity: 0;
 }
 .toast.success {
@@ -121,6 +147,7 @@ border-left: 4px solid #34d399;
 }
 .toast.error {
 background: linear-gradient(135deg, #ef4444, #dc2626);
+/* SOURCE 30 */
 border-left: 4px solid #f87171;
 }
 .toast i {
@@ -130,9 +157,10 @@ width: 1.25rem; height: 1.25rem;
 to { transform: translateX(0); opacity: 1; }
 }
 @keyframes fadeOut {
+/* SOURCE 31 */
 to { opacity: 0; transform: translateY(-10px); }
 }
-/* 🚀 LOG GROUPING */
+/* LOG GROUPING */
 /* MONTH GROUP */
 .month-group-details {
 background: transparent;
@@ -141,6 +169,7 @@ margin-bottom: 1rem;
 }
 .month-group-summary {
 padding: 0.5rem 0.75rem;
+/* SOURCE 32 */
 font-size: 1rem; /* Larger */
 font-weight: 800; /* Bolder */
 color: #111827; /* gray-900 */
@@ -148,6 +177,7 @@ cursor: pointer;
 list-style: none;
 display: flex;
 align-items: center;
+/* SOURCE 33 */
 justify-content: space-between;
 border-bottom: 2px solid #3b82f6; /* blue-500 */
 margin-bottom: 1rem;
@@ -155,6 +185,7 @@ margin-bottom: 1rem;
 .month-group-summary::-webkit-details-marker { display: none; }
 .month-group-summary .group-icon {
 transition: transform 0.2s ease;
+/* SOURCE 34 */
 color: #3b82f6; /* blue-500 */
 }
 .month-group-details[open] > .month-group-summary .group-icon {
@@ -164,8 +195,10 @@ transform: rotate(90deg);
 .log-group-details {
 background: #fff;
 border-radius: 0.75rem;
+/* SOURCE 35 */
 border: 1px solid #e5e7eb;
 box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+/* SOURCE 36 */
 margin-bottom: 0.75rem;
 }
 .log-group-details[open] {
@@ -175,76 +208,94 @@ box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.05);
 padding: 1rem 1.25rem;
 font-size: 1rem;
 font-weight: 700;
-color: #1e40af; /* blue-800 */
+color: #1e40af;
+/* SOURCE 37 */
+/* blue-800 */
 cursor: pointer;
 list-style: none; /* Remove default triangle */
 display: flex;
 align-items: center;
 justify-content: space-between;
-border-bottom: none; /* Reset border */
+border-bottom: none;
+/* SOURCE 38 */
+/* Reset border */
 margin-bottom: 0; /* Reset margin */
 }
 .log-group-summary::-webkit-details-marker { display: none; }
 .log-group-summary .group-icon {
 transition: transform 0.2s ease;
-color: #6b7280; /* gray-500 */
+color: #6b7280;
+/* SOURCE 39 */
+/* gray-500 */
 }
 .log-group-details[open] > .log-group-summary .group-icon {
 transform: rotate(90deg);
 }
 .log-item {
 /* This is the individual log grid */
-border-top: 1px solid #f3f4f6; /* gray-100 */
+border-top: 1px solid #f3f4f6;
+/* SOURCE 40 */
+/* gray-100 */
 }
 .log-group-content .log-item:first-child {
 border-top: 1px solid #e5e7eb; /* gray-200 */
 }
-/* 🚀 MANUAL LOG MODAL */
+/* MANUAL LOG MODAL */
 .modal-overlay {
 position: fixed; inset: 0;
+/* SOURCE 41 */
 background: rgba(0,0,0,0.6);
 display: flex; align-items: center; justify-content: center;
 z-index: 50; opacity: 0;
 transition: opacity 0.2s ease;
+/* SOURCE 42 */
 pointer-events: none;
 }
 .modal-overlay.open { opacity: 1; pointer-events: auto; }
 .modal-box {
 background: white; border-radius: 0.75rem;
 padding: 1.5rem; width: 100%; max-width: 32rem;
+/* SOURCE 43 */
 box-shadow: 0 10px 15px -3px rgba(0,0,0,.1);
 transform: scale(0.95); transition: all 0.2s ease;
 }
-.modal-overlay.open .modal-box { transform: scale(1); }
+/* SOURCE 44 */
+.modal-overlay.open .modal-box { transform: scale(1);}
 .modal-box h3 {
 font-size: 1.25rem; font-weight: 700;
 color: #1f2937; margin-bottom: 0.5rem;
 }
-.modal-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+/* SOURCE 45 */
+.modal-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;}
 .form-group { display: flex; flex-direction: column; }
 .form-group.full-span { grid-column: 1 / -1; }
 .form-group label {
 font-size: 0.875rem; font-weight: 600;
-color: #374151; margin-bottom: 0.25rem;
+color: #374151;
+/* SOURCE 46 */
+margin-bottom: 0.25rem;
 }
 .form-group input, .form-group select {
 padding: 0.5rem 0.75rem; border: 1px solid #d1d5db;
 border-radius: 0.5rem;
 font-size: 1rem;
+/* SOURCE 47 */
 }
 .form-group input:disabled, .form-group select:disabled {
 background: #f3f4f6;
 color: #9ca3af;
 cursor: not-allowed;
 }
-/* 🚀 SPEAKER DATABASE */
+/* SPEAKER DATABASE */
 .speaker-db summary {
 font-size: 1.125rem; font-weight: 700;
+/* SOURCE 48 */
 color: #ca8a04; /* yellow-600 */
 cursor: pointer; list-style: none;
 display: flex; align-items: center; gap: 0.5rem;
 }
-.speaker-db summary::-webkit-details-marker { display: none; }
+/* SOURCE 49 */
+.speaker-db summary::-webkit-details-marker { display: none;}
 .speaker-db summary .group-icon {
 transition: transform 0.2s ease;
 color: #eab308; /* yellow-500 */
@@ -253,9 +304,12 @@ color: #eab308; /* yellow-500 */
 transform: rotate(90deg);
 }
 .speaker-item {
-display: flex; justify-content: space-between; align-items: center;
+display: flex;
+/* SOURCE 50 */
+justify-content: space-between; align-items: center;
 padding: 0.25rem; background: #fefce8; /* yellow-50 */
 border-radius: 0.5rem; border: 1px solid #fde68a; /* yellow-200 */
+/* SOURCE 51 */
 margin-bottom: 0.25rem;
 }
 .speaker-item span {
@@ -264,43 +318,50 @@ color: #713f12; /* yellow-800 */
 word-break: break-all;
 padding-right: 1rem;
 }
+/* SOURCE 52 */
 .speaker-item .btn-group { display: flex; gap: 0.5rem; }
 .speaker-btn {
 padding: 0.375rem; border-radius: 9999px;
 background: #fde68a; /* yellow-200 */
 color: #a16207; /* yellow-700 */
 transition: all 0.2s ease;
+/* SOURCE 53 */
 }
 .speaker-btn:hover { background: #facc15; /* yellow-400 */ }
 .speaker-btn.delete-btn {
 background: #fee2e2; /* red-100 */
 color: #dc2626; /* red-600 */
 }
+/* SOURCE 54 */
 .speaker-btn.delete-btn:hover { background: #fecaca; /* red-200 */ }
-/* 🚀 NEW SPEAKER EDIT BTN STYLE */
+/* NEW SPEAKER EDIT BTN STYLE */
 .speaker-btn.edit-btn {
 background: #dbeafe; /* blue-100 */
-color: #1e40af; /* blue-800 */
+color: #1e40af;
+/* SOURCE 55 */
+/* blue-800 */
 }
 .speaker-btn.edit-btn:hover { background: #bfdbfe; /* blue-200 */ }
-/* ⭐⭐⭐ SPEAKER MESSAGE BOX STYLE ⭐⭐⭐ */
-#speakerMessageBox {
-display: none; /* Will be shown by JS */
+/* SPEAKER MESSAGE BOX STYLE  */
+/* SOURCE 56 */
+#speakerMessageBox { display: none; /* Will be shown by JS */
 transition: opacity 0.3s ease;
 z-index: 10;
 margin-bottom: 0.5rem;
 padding: 0.5rem 0.75rem;
 border-radius: 0.5rem;
+/* SOURCE 57 */
 font-size: 0.875rem;
 font-weight: 500;
 }
 #speakerMessageBox.hidden {
 display: none;
 }
-/* 🚀 DASHBOARD */
+/* DASHBOARD */
 .stat-grid {
 display: grid;
 grid-template-columns: repeat(3, 1fr);
+/* SOURCE 58 */
 gap: 1rem;
 }
 .stat-card {
@@ -312,6 +373,7 @@ text-align: center;
 }
 .stat-card-title {
 font-size: 0.875rem;
+/* SOURCE 59 */
 font-weight: 600;
 color: #4b5563; /* gray-600 */
 margin-bottom: 0.5rem;
@@ -319,32 +381,42 @@ margin-bottom: 0.5rem;
 .stat-card-value {
 font-size: 1.875rem;
 font-weight: 800;
-color: #1e40af; /* blue-800 */
+color: #1e40af;
+/* SOURCE 60 */
+/* blue-800 */
 }
 .stat-card-value.ontime-ok { color: #059669; /* green-700 */ }
 .stat-card-value.ontime-warn { color: #d97706; /* amber-600 */ }
+/* SOURCE 61 */
 .stat-card-value.ontime-bad { color: #dc2626; /* red-600 */ }
-/* ⭐⭐⭐ STYLE FOR FILE TYPE DASHBOARD CARD ⭐⭐⭐ */
+/* STYLE FOR FILE TYPE DASHBOARD CARD  */
 #stat-file-types {
 font-size: 1rem; /* Smaller font */
+/* SOURCE 62 */
 font-weight: 600; /* Bolder than normal */
 color: #1f2937; /* Dark gray */
 padding-top: 0.35rem; /* Adjust vertical alignment */
+/* SOURCE 63 */
 line-height: 1.5; /* Ensure it fits */
 }
-/* ⭐⭐⭐ STYLES FOR FILE TYPE COLORS ⭐⭐⭐ */
+/* STYLES FOR FILE TYPE COLORS  */
+/* SOURCE 64 */
 .file-type-live { color: #1d4ed8; } /* blue-700 */
 .file-type-batch { color: #0e7490; } /* cyan-700 */
+/* SOURCE 65 */
 .file-type-hp { color: #b45309; } /* amber-700 */
 .file-type-aiera { color: #be185d; } /* pink-700 */
-/* ⭐⭐⭐ NEW STYLES FOR FILTER BAR (UPDATED) ⭐⭐⭐ */
+/* NEW STYLES FOR FILTER BAR (UPDATED)  */
 #filter-bar {
 display: flex;
+/* SOURCE 66 */
 flex-wrap: wrap; /* Allow wrapping on small screens */
 gap: 0.5rem; /* Increased gap */
 align-items: center;
 background-color: #f9fafb;
-padding: 0.5rem; /* Increased padding */
+padding: 0.5rem;
+/* SOURCE 67 */
+/* Increased padding */
 border-radius: 0.5rem;
 border: 1px solid #e5e7eb;
 margin-top: 1rem;
@@ -352,8 +424,10 @@ margin-top: 1rem;
 #filter-bar label {
 font-size: 0.875rem;
 font-weight: 600;
+/* SOURCE 68 */
 color: #374151;
 }
+/* SOURCE 69 */
 #filter-bar select, #filter-bar input[type="date"] { /* Added input[type="date"] */
 padding: 0.25rem 0.5rem;
 border: 1px solid #d1d5db;
@@ -368,12 +442,14 @@ background-color: #e5e7eb;
 color: #374151;
 border-radius: 0.5rem;
 transition: background-color 0.2s;
+/* SOURCE 70 */
 margin-left: auto; /* Pushes to the right */
 }
 #clear-filter-btn:hover { background-color: #d1d5db; }
-/* ⭐⭐⭐ SPLIT BUTTON STYLES (for new resources) ⭐⭐⭐ */
+/* SPLIT BUTTON STYLES (for new resources)  */
 .split-btn-container {
 display: flex;
+/* SOURCE 71 */
 width: 100%;
 border-radius: 0.75rem;
 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -382,6 +458,7 @@ overflow: hidden;
 .split-btn {
 flex: 1;
 display: flex;
+/* SOURCE 72 */
 align-items: center;
 justify-content: center;
 padding: 1rem;
@@ -390,439 +467,715 @@ color: white;
 transition: all 0.2s;
 text-decoration: none;
 }
+/* SOURCE 73 */
 .split-btn:hover { filter: brightness(110%); }
 .split-btn i { margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; }
-/* ⭐ Specific styling for Aiera buttons to prevent overlap ⭐ */
+/* Specific styling for Aiera buttons to prevent overlap  */
 #btn-aiera-fr-started,
 #btn-aiera-fr-ended,
 #btn-aiera-sv-started,
 #btn-aiera-sv-ended {
-font-size: 0.78rem !important;
-padding-left: 0.25rem !important;
+/* SOURCE 74 */
+font-size: 0.78rem !important; padding-left: 0.25rem !important;
 padding-right: 0.25rem !important;
 line-height: 1.1 !important;
+/* SOURCE 75 */
 white-space: normal !important;
 }
-.notes-db[open] > summary .group-icon {
-transform: rotate(90deg);
+/* DASHBOARD COLLAPSIBLE STYLES  */
+/* Styling for the summary bar within the dashboard container */
+.dashboard-summary {
+/* SOURCE 76 */
+    padding: 0.75rem 1.25rem; font-size: 1.25rem;
+    font-weight: 700;
+    color: #4b5563; 
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f3f4f6;
+    border-radius: 0.75rem;
+/* SOURCE 77 */
+border: 1px solid #e5e7eb;
+}
+/* Ensure the overall container styling is clean */
+#productivity-dashboard-container {
+    background: white;
+    border-radius: 1rem;
+/* SOURCE 78 */
+box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+/* SOURCE 79 */
+border-left: 4px solid #9333ea; /* Purple for Dashboard */
+    padding: 1.5rem;
+}
+.dashboard-details[open] > .dashboard-summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+/* SOURCE 80 */
+    margin-bottom: 0;
+}
+.dashboard-summary::-webkit-details-marker { display: none; }
+.dashboard-summary .group-icon {
+    transition: transform 0.2s ease;
+/* SOURCE 81 */
+    color: #8b5cf6;
+}
+.dashboard-details[open] > .dashboard-summary .group-icon {
+    transform: rotate(90deg);
+}
+/* SOURCE 82 */
+.notes-db[open] > summary .group-icon { transform: rotate(90deg); }
+
+
+/* ------------------------------------------- */
+/* FINAL STYLES FOR DIGITAL CLOCK WIDGET (FROM CLOCK AESTHETIC) */
+/* ------------------------------------------- */
+.time-widget {
+    /* UPDATED: Dark Blue */
+    /* SOURCE 509 */
+    background: #041650; color: #ffffff;
+    /* ADJUSTED: Slightly increased overall padding */
+    padding: .75rem; 
+    border-radius: 0.75rem; 
+    display: flex; 
+    flex-direction: column;
+    /* SOURCE 510 */
+    justify-content: center; /* Center vertically */
+    align-items: center; 
+    font-weight: 700;
+    line-height: 1.2;
+    /* SOURCE 511 */
+    height: 100%;
+}
+.widget-label { /* New style for "TODAY IS" */
+    /* SOURCE 512 */
+    font-size: 1.25rem; /* UPDATED: Light red/pink color for subtle contrast */
+    color: #00000;
+    text-transform: uppercase;
+    /* SOURCE 513 */
+    font-weight: 600; /* REMOVED: Redundant underline properties */
+    margin-bottom: 0.25rem; 
+}
+.time-widget .date-display {
+    /* SOURCE 514 */
+    font-size: 1.25rem; color: #ffffff; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    /* Underline border to separate date and time */
+    /* SOURCE 515 */
+    border-bottom: 2px solid #ffffff; padding-bottom: 0.5rem; 
+    margin-bottom: 0.5rem; 
+    width: 90%; 
+    text-align: center; 
+}
+.time-widget .time-display {
+    /* Slightly smaller font for better fit with the border */
+    /* SOURCE 516 */
+    font-size: 3rem; font-family: 'Inter', monospace; 
+    letter-spacing: 0.05em;
+    line-height: 1; 
+}
+/* NEW STYLES FOR TIGHTER LAYOUT (FROM CLOCK AESTHETIC) */
+.header-left-content {
+    /* Use grid to split the title from the welcome/note content */
+    /* SOURCE 517 */
+    display: grid; grid-template-rows: auto 1fr; /* Title row, then flexible content row */
+    /* SOURCE 518 */
+    height: 100%;
+}
+.welcome-note-container {
+    /* Flex container to push welcome up and note down */
+    /* SOURCE 519 */
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    /* Keeping padding 0.5rem as previously requested for spacing */
+    padding-top: 0.5rem;
+    /* SOURCE 520 */
+    padding-bottom: 0.5rem; 
+    height: 100%;
+}
+
+/* ------------------------------------------- */
+/* NEW STYLES FOR CUSTOM COLLAPSIBLE PANELS */
+/* ------------------------------------------- */
+.panel-details {
+    /* Ensures the border and shadow stay on the main container */
+    border: none !important;
+    background: transparent !important;
+}
+
+.panel-summary {
+    /* Reuses Dashboard-like styles for a consistent, clear summary bar */
+    padding: 0.75rem 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #4b5563; /* Gray text, matches dashboard summary */
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f3f4f6;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 0; 
+}
+
+.panel-summary::-webkit-details-marker { display: none; }
+
+/* Styling for when the panel is open */
+.panel-details[open] > .panel-summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.panel-summary .panel-icon {
+    transition: transform 0.2s ease;
+    color: #3b82f6; /* Blue icon by default */
+}
+
+/* Rotate icon when panel is open */
+.panel-details[open] > .panel-summary .panel-icon {
+    transform: rotate(90deg);
+}
+
+/* The inner content wrapper */
+.panel-content {
+    padding: 1.5rem; 
+    padding-top: 0; 
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    background: white;
 }
 </style>
 </head>
 <body class="bg-gray-50">
 <div id="app" class="min-h-screen p-4 sm:p-8 pb-20">
 <div class="max-w-6xl mx-auto space-y-8">
-<div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
-<div class="p-3 bg-blue-50 rounded-xl mb-4 shadow-sm">
-<h1 class="text-4xl font-extrabold text-black-800 flex items-center gap-3">
-<i data-lucide="timer" class="w-7 h-7 text-blue-600"></i>
-FD Editor Workflow Timer
-</h1>
+
+<div class="bg-white p-3 rounded-xl shadow-lg border border-gray-100">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        
+        <div class="col-span-2 header-left-content">
+            <div class="p-3 bg-blue-50 
+                rounded-xl shadow-sm mb-3 flex-shrink-0">
+                <h1 class="text-4xl font-extrabold text-black-800 flex items-center gap-3">
+                    <i data-lucide="timer" class="w-7 h-7 text-blue-600"></i>
+                    FD Editor Workflow Timer
+                </h1>
+            </div>
+
+            <div class="welcome-note-container">
+                <p id="welcome-message-container" class="text-xl text-gray-700 font-bold p-3 bg-white-50 rounded-lg border border-red-200 flex items-center mb-3">
+                    <i data-lucide="contact" class="w-6 h-6 text-red-600 mr-2"></i>
+                    <span class="text-black-700">Welcome, FD Editor!</span>
+                </p>
+                
+                <div class="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-xs text-gray-600 font-medium leading-relaxed">
+                        <span class="text-xs text-blue-700 font-semibold mr-1">
+                            <i data-lucide="info" class="w-4 h-4 inline-block align-text-center"></i> Note:
+                        </span>
+                        This Workflow Timer is for personal use only to track time and ensure work is submitted within TAT.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="clock-widget" class="time-widget">
+            <div class="flex items-center mb-1">
+                <i data-lucide="calendar" class="w-7 h-7 text-white mr-2"></i> 
+                <span class="widget-label">TODAY IS</span> 
+            </div>
+            <span id="date-display" class="date-display">...</span>
+            <span id="time-display" class="time-display">...</span>
+        </div>
+        
+    </div>
 </div>
-<p id="welcome-message-container" class="text-xl text-gray-700 font-bold p-3 bg-white-50 rounded-lg border border-red-200 flex items-center gap-3 mb-1">
-<i data-lucide="calendar" class="w-6 h-6 text-red-600"></i>
-<span class="text-black-700">Welcome, [User Name]!</span> </p>
-<div class="p-2 bg-gray-50 rounded-lg border border-gray-200">
-<p class="text-sm text-gray-600 font-medium leading-relaxed">
-<span class="text-sm text-blue-700 font-semibold mr-1">
-<i data-lucide="info" class="w-4 h-4 inline-block align-text-center"></i> Note:
-</span>
-This Workflow Timer, inspired by the NW Workflow Logger, is for personal use only by FD Editors to track time and ensure work is submitted within TAT.
-</p>
+<div class="bg-white rounded-2xl shadow-xl border-l-4 border-blue-500 p-0">
+    <details class="panel-details" open>
+        <summary class="panel-summary">
+            <h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2">
+                <i data-lucide="settings" class="w-6 h-6 text-blue-600"></i>
+                <span class="relative">AUDIO FILE DETAILS<span
+                    class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"></span></span>
+            </h2>
+            <i data-lucide="chevron-right" class="panel-icon w-6 h-6 text-blue-600"></i>
+        </summary>
+        <div class="panel-content pb-5">
+            <div id="audio-length-container" class="mb-6 pt-3">
+                <label for="audio-length" class="block text-lg font-medium text-gray-700 mb-2">Input File Audio Length
+                (HH:MM:SS)*</label>
+                <input type="text" id="audio-length" placeholder="00:00:00" pattern="\d{2}:\d{2}:\d{2}"
+                class="w-full p-2 border border-gray-300 rounded-lg text-3xl font-mono font-semibold text-center focus:border-blue-500 focus:ring-blue-500"
+                value="00:00:00">
+                <p id="audio-error" class="text-sm text-red-500 mt-1 hidden">Invalid format. Must be HH:MM:SS.</p>
+            </div>
+            <div class="flex flex-col md:flex-row gap-6 mb-4">
+                <div class="flex-1 space-y-4">
+                    <div>
+                        <label for="file-type" class="block text-lg font-medium text-gray-700 mb-2">File Type*</label>
+                        <select id="file-type" class="w-full p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+                        <option value="live" selected>Live File (FR & SV)</option>
+                        <option value="batch">Batch File (FR & SV)</option>
+                        <option value="hp">HP File (FR Only)</option>
+                        <option value="aiera">Aiera File (FR & SV+HP)</option> </select>
+                    </div>
+                    <div>
+                        <label for="file-name" class="block text-lg font-medium text-gray-700 mb-2">Input File Name
+                        (Optional)</label>
+                        <input type="text" id="file-name" placeholder="e.g., 123456 live ABC Company Q1 2025"
+                        class="w-full p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div id="tat-targets-container" class="flex-1 bg-blue-50 p-2.5 rounded-xl border border-blue-200">
+                    <p class="text-blue-700 font-bold text-2xl mb-2 pb-1 border-b border-blue-200">TAT Targets</p>
+                    <dl id="live-batch-targets" class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
+                        <dt class="font-medium text-lg text-gray-700 flex items-center">
+                            <span class="w-2 h-2 bg-orange-400 rounded-full mr-1.5"></span>
+                            FR <span class="text-gray-500 ml-1" id="fr-multiplier-label">(0.5x)</span>
+                        </dt>
+                        <dd class="text-right">
+                            <span id="fr-target-display" class="target-chip fr text-sm px-2.5 py-1">00:00:00</span>
+                        </dd>
+                        <dt class="font-medium text-lg text-gray-700 flex items-center">
+                            <span class="w-2 h-2 bg-lime-500 rounded-full mr-1.5"></span>
+                            <span id="sv-label-text">SV</span> <span class="text-gray-500 ml-1" id="sv-multiplier-label">(1.5x)</span>
+                        </dt>
+                        <dd class="text-right">
+                            <span id="sv-target-display" class="target-chip sv text-sm px-2.5 py-1">00:00:00</span>
+                        </dd>
+                        <dt
+                            class="col-span-1 pt-2 mt-.5 border-t border-blue-200 font-bold text-gray-800 flex items-center text-lg">
+                            <span class="w-2.5 h-2.5 bg-indigo-600 rounded-full mr-1.5"></span>
+                            Overall <span class="text-gray-600 ml-1" id="overall-multiplier-label">(2.0x)</span>
+                        </dt>
+                        <dd class="pt-2 mt-.5 border-t border-blue-200 text-right">
+                            <span id="overall-target-display"
+                            class="target-chip overall mt-.5 text-base px-3 py-1.5 font-bold">00:00:00</span>
+                        </dd>
+                    </dl>
+                    <dl id="hp-targets" class="hidden grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
+                        <dt
+                            class="col-span-1 font-bold text-gray-800 flex items-center text-lg">
+                            <span class="w-2.5 h-2.5 bg-orange-400 rounded-full mr-1.5"></span>
+                            FR Target
+                        </dt>
+                        <dd class="text-right">
+                            <span
+                            class="target-chip fr mt-.5 text-base px-3 py-1.5 font-bold">01:30:00</span>
+                        </dd>
+                        <dt class="col-span-2 text-sm text-gray-600 p-4 bg-yellow-50 border border-yellow-200 rounded-lg mt-4">
+                            HP files have a fixed 1.5-hour TAT regardless of audio length.
+                        </dt>
+                    </dl>
+                </div>
+            </div>
+            <div class="flex items-center p-2 bg-red-50 rounded-xl border border-red-200 w-full mt-4">
+                <input id="beep-alerts" type="checkbox" checked
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                <label for="beep-alerts" id="beep-alerts-label" class="ml-2 block text-sm font-medium text-red-700">
+                Beep Alerts (FR: 5 min left · SV: 10 & 5 min left)
+                </label>
+            </div>
+        </div>
+    </details>
 </div>
+<div class="bg-white rounded-2xl shadow-xl border-l-4 border-cyan-500 p-0">
+    <details class="panel-details" open>
+        <summary class="panel-summary">
+            <h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2">
+                <i data-lucide="clock" class="w-6 h-6 text-cyan-600"></i>
+                <span class="relative">
+                    WORKFLOW TIMER AND PROGRESS
+                    <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"></span>
+                </span>
+            </h2>
+            <i data-lucide="chevron-right" class="panel-icon w-6 h-6 text-cyan-600"></i>
+        </summary>
+        <div class="panel-content">
+            <div id="live-batch-buttons" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5 pt-3">
+                <button id="btn-fr-started" class="workflow-btn btn-fr-started" disabled>1) FR Started</button>
+                <button id="btn-fr-ended" class="workflow-btn btn-fr-ended" disabled>2) FR Ended</button>
+                <button id="btn-sv-started" class="workflow-btn btn-sv-started" disabled>3) SV Started</button>
+                <button id="btn-sv-ended" class="workflow-btn btn-sv-ended" disabled>4) SV Ended</button>
+                <button id="btn-log-another" class="workflow-btn col-span-2 sm:col-span-1">Reset</button>
+            </div>
+            <div id="aiera-buttons" class="hidden grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5 pt-3">
+                <button id="btn-aiera-fr-started" class="workflow-btn btn-aiera-started btn-sm-text" disabled>1) Aiera – FR Started</button>
+                <button id="btn-aiera-fr-ended" class="workflow-btn btn-aiera-started btn-sm-text" disabled>2) Aiera – FR Ended</button>
+                <button id="btn-aiera-sv-started" class="workflow-btn btn-aiera-svhp-started btn-sm-text" disabled>3) SV + HP Started</button>
+                <button id="btn-aiera-sv-ended" class="workflow-btn btn-aiera-svhp-ended btn-sm-text" disabled>4) SV + HP Ended</button>
+                <button id="btn-log-another-aiera" class="workflow-btn col-span-2 sm:col-span-1">Reset</button>
+            </div>
+            <div id="hp-buttons" class="hidden grid grid-cols-3 gap-3 mb-5 pt-3">
+                <button id="btn-hp-fr-started" class="workflow-btn btn-fr-started col-span-1" disabled>HP - FR Started</button>
+                <button id="btn-hp-fr-ended" class="workflow-btn btn-fr-ended col-span-1" disabled>HP - FR Ended</button>
+                <button id="btn-log-another-hp" class="workflow-btn col-span-1">Reset</button>
+            </div>
+            <div class="mb-6">
+                <div class="toggle-capsule">
+                    <button id="toggle-countdown" class="active">COUNTDOWN</button>
+                    <button id="toggle-stopwatch">STOPWATCH</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-3 pb-2 border-b-2 border-gray-200 font-bold text-gray-700 text-sm sm:text-base">
+                <div>DESCRIPTION</div>
+                <div class="text-center">TIME</div>
+            </div>
+            <div id="live-batch-timers" class="space-y-6">
+                <div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
+                    <div class="text-xl font-bold text-gray-800 self-center">Overall (Total TAT - <span id="overall-tat-label-display">2.0x</span>)</div>
+                    <div class="text-center flex flex-col items-center">
+                        <span id="overall-time" class="timer-display inline-block">00:00:00</span>
+                        <span id="overall-target" class="target-chip overall">Target: 00:00:00</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
+                    <div class="text-xl font-bold text-gray-800 self-center flex flex-col">
+                        First Review (FR - 0.5x)
+                        <div id="fr-note-live" class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
+                            NOTE: After FR, Export to Microsoft Word (.docx) Rename file to
+                            <span class="font-mono text-[0.55rem] border bg-gray-100/60 px-1 rounded">Date - Surname, First Name - File Number <span id="aiera-note-suffix"></span></span>
+                            Upload
+                            <a href="https://forms.gle/Hxukyvt9dVxzcyUU7" target="_blank" class="text-blue-500 hover:text-blue-600 underline">here</a>.
+                            See
+                            <a href="https://docs.google.com/document/d/15mF1rMT5GEAAWtQw7HOGiT33CeCLglOEG8N-K_Ap9UM/edit?tab=t.0#heading=h.z6xrsh9jk47k" target="_blank" class="text-blue-500 hover:text-blue-600 underline">DITL</a>
+                            for file format. 
+                        </div>
+                    </div>
+                    <div class="text-center flex flex-col items-center">
+                        <span id="fr-time" class="timer-display inline-block">00:00:00</span>
+                        <span id="fr-target" class="target-chip fr">Target: 00:00:00</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 py-3">
+                    <div class="text-xl font-bold text-gray-800 self-center flex flex-col">
+                        <span id="sv-stage-title">Speaker Verified (SV - 1.5x)</span>
+                        <div class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
+                            NOTE: After SV, Go to <a id="sv-overview-link" href="https://editor.inflexiontranscribe.com/my-profile" target="_blank" class="text-blue-500 hover:text-blue-600 underline">Overview</a> Click checkmark to validate.
+                        </div>
+                    </div>
+                    <div class="text-center flex flex-col items-center">
+                        <span id="sv-time" class="timer-display inline-block">00:00:00</span>
+                        <span id="sv-target" class="target-chip sv">Target: 00:00:00</span>
+                    </div>
+                </div>
+            </div>
+            <div id="hp-timer" class="hidden space-y-6">
+                <div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
+                    <div class="text-xl font-bold text-gray-800 self-center flex flex-col">
+                        HP First Review (FR)
+                        <div class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
+                            NOTE: HP files have a fixed 1.5-hour TAT. Press "HP - FR Ended" to stop the timer and log the file.
+                        </div>
+                    </div>
+                    <div class="text-center flex flex-col items-center">
+                        <span id="hp-fr-time" class="timer-display inline-block">01:30:00</span>
+                        <span id="hp-fr-target" class="target-chip fr">Target: 01:30:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </details>
 </div>
-<div class="bg-white p-6 pb-5 rounded-2xl shadow-xl border-l-4 border-blue-500">
-<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
-<i data-lucide="settings" class="w-6 h-6 text-blue-600"></i>
-<span class="relative">AUDIO FILE DETAILS<span
-class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"></span></span>
-</h2>
-<div id="audio-length-container" class="mb-6">
-<label for="audio-length" class="block text-lg font-medium text-gray-700 mb-2">Input File Audio Length
-(HH:MM:SS)*</label>
-<input type="text" id="audio-length" placeholder="00:00:00" pattern="\d{2}:\d{2}:\d{2}"
-class="w-full p-2 border border-gray-300 rounded-lg text-3xl font-mono font-semibold text-center focus:border-blue-500 focus:ring-blue-500"
-value="00:00:00">
-<p id="audio-error" class="text-sm text-red-500 mt-1 hidden">Invalid format. Must be HH:MM:SS.</p>
+
+<div class="bg-white rounded-2xl shadow-xl border-l-4 border-indigo-500 p-0">
+    <details class="panel-details" open>
+        <summary class="panel-summary">
+            <h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2">
+                <i data-lucide="check-square" class="w-6 h-6 text-indigo-600"></i>
+                <span class="relative">
+                    LOGGED SUBMISSIONS
+                    <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-blue-400 rounded-full"></span>
+                </span>
+            </h2>
+            <i data-lucide="chevron-right" class="panel-icon w-6 h-6 text-indigo-600"></i>
+        </summary>
+        
+        <div class="panel-content">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pt-3">
+                <div class="flex flex-wrap gap-2">
+                    <button id="import-logs-btn" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="upload" class="w-4 h-4"></i> Import Logs
+                    </button>
+                    <button id="export-logs-btn" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="download" class="w-4 h-4"></i> Export Logs
+                    </button>
+                    <button id="export-csv-btn" class="px-3 py-1.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="table-2" class="w-4 h-4"></i> Export CSV
+                    </button>
+                    <button id="clear-all-logs" class="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear All
+                    </button>
+                    <button id="manual-log-btn" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Manual Log
+                    </button>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 -mt-2 mb-4 px-1">
+                Use <strong>Import/Export Logs</strong> to back up or move your data (.json) to another browser. Use <strong>Export CSV</strong> to open your logs in Excel or Sheets.
+            </p>
+            <div id="filter-bar">
+                <i data-lucide="filter" class="w-5 h-5 text-gray-500"></i>
+                <label for="filter-year">Year:</label>
+                <select id="filter-year">
+                    <option value="all">All Years</option>
+                </select>
+                <label for="filter-month">Month:</label>
+                <select id="filter-month">
+                    <option value="all">All Months</option>
+                </select>
+                <label for="date-range-start">Start Date:</label>
+                <input type="date" id="date-range-start">
+                <label for="date-range-end">End Date:</label>
+                <input type="date" id="date-range-end">
+                <button id="clear-filter-btn">Clear Filter</button>
+            </div>
+            <div id="log-toast-container" class="toast-container mb-4 mt-4"></div>
+            <div class="grid grid-cols-[2.5fr_1.5fr_1.5fr_1.5fr] gap-4 mb-3 p-3 bg-indigo-100 text-indigo-800 font-bold text-sm sm:text-base rounded-t-lg px-5">
+                <div>File Name & Duration</div>
+                <div class="text-center">FR Time / Target</div>
+                <div class="text-center">SV Time / Target</div>
+                <div class="text-center">Overall / Timestamps</div>
+            </div>
+            <div id="log-display" class="space-y-4 text-gray-600">
+                <p class="px-5 py-3">No files logged yet. Logged times will appear here.</p>
+            </div>
+            <div id="log-summary" class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-sm font-bold text-indigo-800 text-center">
+                Total Work Days: <span id="total-worked-days">0</span> | Total Files: <span id="total-files-footer">0</span> | Total AH: <span id="total-ah">0.00</span>
+            </div>
+            <p class="mt-4 text-xs text-red-500 font-medium p-2 bg-red-100 rounded-lg border border-red-200"> <span class="text-xs text-red-700 font-semibold mr-1">
+                <i data-lucide="triangle-alert" class="w-4 h-4 inline-block align-text-center"></i> Note:
+            </span>
+            Switching browsers may clear logged data. Export your log data before switching.
+            Always check the <strong><a href="https://script.google.com/macros/s/AKfycbxfJiAfQ0s8Yl5JcVvMMJqFbXEvfdNUBDXFqAPEAQHDWZPl96Yzj625DBh7POHV5eZ9/exec" target="_blank" class="text-blue-500 hover:text-blue-600 underline"> Official AH tracker</a></strong> and <strong><a href="https://script.google.com/macros/s/AKfycbwgwhhQlj1mQ6ab30zNOnw5wIgc8fLe9pF475GJwsyxWRYt12wdptO9AGrB5nKQglI/exec" target="_blank" class="text-blue-500 hover:text-blue-600 underline"> File Rework Tracker</a></strong> </p>
+            <input type="file" id="log-import-input" accept=".json" class="hidden">
+        </div>
+    </details>
 </div>
-<div class="flex flex-col md:flex-row gap-6 mb-4">
-<div class="flex-1 space-y-4">
-<div>
-<label for="file-type" class="block text-lg font-medium text-gray-700 mb-2">File Type*</label>
-<select id="file-type" class="w-full p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
-<option value="live" selected>Live File (FR & SV)</option>
-<option value="batch">Batch File (FR & SV)</option>
-<option value="hp">HP File (FR Only)</option>
-<option value="aiera">Aiera File (FR & SV+HP)</option> </select>
+
+<div class="bg-white rounded-2xl shadow-xl border-l-4 border-purple-500 p-0">
+    <details class="panel-details" open>
+        <summary class="panel-summary">
+            <h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2">
+                <i data-lucide="bar-chart-3" class="w-6 h-6 text-purple-600"></i>
+                <span class="relative">
+                    PRODUCTIVITY DASHBOARD
+                    <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"></span>
+                </span>
+            </h2>
+            <i data-lucide="chevron-right" class="panel-icon w-6 h-6 text-purple-600"></i>
+        </summary>
+
+        <div class="panel-content">
+            <div class="stat-grid mb-6 pt-3">
+                <div class="stat-card">
+                    <div class="stat-card-title">Total Files Logged</div>
+                    <div id="stat-total-files" class="stat-card-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Total Audio Hours</div>
+                    <div id="stat-total-ah" class="stat-card-value">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Total File Types Done</div>
+                    <div id="stat-file-types" class="stat-card-value">
+                        <span class="file-type-live">LIVE: 0</span> |
+                        <span class="file-type-batch">BATCH: 0</span> |
+                        <span class="file-type-hp">HP: 0</span> |
+                        <span class="file-type-aiera">AIERA: 0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">FR Within TAT Rate</div>
+                    <div id="stat-ontime-fr" class="stat-card-value ontime-ok mb-2">N/A</div>
+                    <div id="stat-details-fr" class="text-xs text-gray-600 text-center space-y-1">
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">SV Within TAT Rate</div>
+                    <div id="stat-ontime-sv" class="stat-card-value ontime-ok mb-2">N/A</div>
+                    <div id="stat-details-sv" class="text-xs text-gray-600 text-center space-y-1">
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Overall TAT Rate</div>
+                    <div id="stat-ontime-overall" class="stat-card-value ontime-ok mb-2">N/A</div>
+                    <div id="stat-details-overall" class="text-xs text-gray-600 text-center space-y-1">
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-6 border-purple-200">
+
+            <details class="dashboard-details" id="watr-chart-details">
+                <summary class="dashboard-summary">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-6 h-6 text-purple-600"></i>
+                                            TAT Trend Analysis
+                    </div>
+                    <i data-lucide="chevron-right" class="group-icon w-6 h-6"></i>
+                </summary>
+                <div class="p-4 rounded-xl shadow-inner mt-2 border border-gray-100">
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label for="tat-chart-type" class="block text-sm font-medium text-gray-700">Select TAT Metric:</label>
+                            <select id="tat-chart-type" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="overall">Overall TAT (Total Workflow)</option>
+                                <option value="fr" selected>First Review (FR)</option>
+                                <option value="sv">Speaker Verified (SV / SV+HP)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-2 bg-purple-50 rounded-lg border border-purple-200">
+                        <p class="text-xs text-purple-700 font-semibold leading-relaxed">
+                            This bar chart compares your actual TAT against the target TAT for the last 20 <strong>completed</strong> files matching your filter. A <strong>Red Bar</strong> means the file was <strong>EXCEEDED TAT</strong>.
+                        </p>
+                    </div>
+
+                    <div class="mt-4 flex justify-center">
+                        <canvas id="cumulativeTatChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </details>
 </div>
-<div>
-<label for="file-name" class="block text-lg font-medium text-gray-700 mb-2">Input File Name
-(Optional)</label>
-<input type="text" id="file-name" placeholder="e.g., 123456 live ABC Company Q1 2025"
-class="w-full p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+
+<div class="bg-white rounded-2xl shadow-xl border-l-4 border-yellow-500 p-0">
+    <details class="panel-details" open>
+        <summary class="panel-summary">
+            <h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2">
+                <i data-lucide="link" class="w-6 h-6 text-yellow-600"></i>
+                <span class="relative">
+                    RESOURCES
+                    <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full"></span>
+                </span>
+            </h2>
+            <i data-lucide="chevron-right" class="panel-icon w-6 h-6 text-yellow-600"></i>
+        </summary>
+
+        <div class="panel-content">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+                <div class="split-btn-container bg-gradient-to-r from-cyan-500 to-cyan-600">
+                    <a href="https://editor.inflexiontranscribe.com/dashboard" target="_blank" class="split-btn border-r border-blue-700 gap-2">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Transcribe Dashboard 
+                    </a>
+                    <a href="https://staging.editor.inflexion.ai/dashboard" target="_blank" class="split-btn gap-2">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Inflexion Dashboard 
+                    </a>
+                </div>
+                <a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl shadow-md hover:from-green-600 hover:to-green-700 transition">
+                    <i data-lucide="book-open-check" class="w-5 h-5 mr-2"></i> FD Style Guide
+                </a>
+                <a href="https://docs.google.com/document/d/15mF1rMT5GEAAWtQw7HOGiT33CeCLglOEG8N-K_Ap9UM/edit?tab=t.0#heading=h.7dpb3g8wv29y" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl shadow-md hover:from-purple-600 hover:to-purple-700 transition">
+                    <i data-lucide="file-text" class="w-5 h-5 mr-2"></i> FD DITL Guide
+                </a>
+                <a href="https://discord.com/channels/1391591320677519431/1435009120880296006/1435010581571703019" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl shadow-md hover:from-amber-600 hover:to-amber-700 transition">
+                    <i data-lucide="book-open-check" class="w-5 h-5 mr-2"></i> HP Style Guide
+                </a>
+                <a href="https://discord.com/channels/1391591320677519431/1391597777120923748" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:from-indigo-600 hover:to-indigo-700 transition">
+                    <i data-lucide="message-circle" class="w-5 h-5 mr-2"></i> FD Discord Server
+                </a>
+                <div class="split-btn-container 
+                    bg-gradient-to-r from-pink-500 to-pink-600">
+                    <a href="https://docs.google.com/document/d/123h1eeF1s5J16t6qSvdSN2Z_UI9eymJkLF8z60sqEcM/edit?tab=t.0" target="_blank" class="split-btn border-r border-pink-700 gap-2">
+                        <i data-lucide="book-open-check" class="w-5 h-5"></i> Aiera Style Guide
+                    </a>
+                    <a href="https://docs.google.com/spreadsheets/d/1bgFa-izU7GtDy1eeqjpt8FFbFyVelml6xV43TJ-00HA/edit?gid=1021819507#gid=1021819507" target="_blank" class="split-btn gap-2">
+                        <i data-lucide="diff" class="w-5 h-5"></i> Aiera SG Diff Sheet
+                    </a>
+                </div>
+            </div>
+            <details class="speaker-db mt-6 border-t border-gray-200 pt-6">
+                <summary>
+                    <i data-lucide="chevron-right" class="group-icon w-5 h-5"></i><i data-lucide="circle-user" class="w-5 h-5"></i>
+                    SPEAKERS DATABASE
+                </summary>
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-sm text-gray-600 mb-4">
+                        This is your personal database for formatted and verified speakers.
+                        Add a speaker according to the format in the
+                        <a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="text-blue-500 hover:text-blue-600 underline">FD Style Guide</a>.
+                        <strong>This is only visible to you.</strong>
+                    </p>
+                    <div id="speakerMessageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg mb-2">
+                        <p id="speakerMessageText" class="text-xs font-medium"></p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 mb-1">
+                        <button id="add-speaker-btn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex-shrink-0 flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add a Speaker
+                        </button>
+                        <input type="text" id="speaker-search" placeholder="Search speakers..." class="flex-1 p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+                        <div class="flex flex-shrink-0 gap-2">
+                            <button id="import-speaker-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex-shrink-0 flex items-center gap-1">
+                                <i data-lucide="upload" class="w-4 h-4"></i> Import
+                            </button>
+                            <button id="export-speaker-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex-shrink-0 flex items-center gap-1">
+                                <i data-lucide="download" class="w-4 h-4"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">Use <strong>Import/Export (.json)</strong> to back up or move your list to a new browser.</p>
+                </div> 
+                <div id="speaker-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                </div>
+                <input type="file" id="speaker-import-input" accept=".json" class="hidden">
+            </details>
+            <details class="notes-db mt-6 border-t border-gray-200 pt-6 text-lg">
+                <summary style="list-style: none; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 700; color: #10b981;">
+                    <i data-lucide="chevron-right" class="group-icon w-5 h-5"></i>
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    QUICK NOTEPAD
+                </summary>
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 notes-panel">
+                    <header class="p-2 border-b border-gray-200 flex items-center justify-between mb-2">
+                        <p class="text-sm text-gray-600 flex-grow pr-4">
+                            This is your private, persistent notepad. Quickly jot down ideas, temporary file names, or reminders.
+                        </p>
+                        <div class="flex flex-col items-end space-y-2 flex-shrink-0">
+                            <div id="messageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg">
+                                <p id="messageText" class="text-xs font-medium"></p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="clearBtn" class="flex items-center p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Clear All Text">
+                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Clear
+                                </button>
+                                <button id="undoBtn" class="flex items-center p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Undo Last Action" disabled>
+                                    <i data-lucide="undo-2" class="w-4 h-4 mr-1"></i> Undo
+                                </button>
+                                <button id="redoBtn" class="flex items-center p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Redo Last Action" disabled>
+                                    <i data-lucide="redo-2" class="w-4 h-4 mr-1"></i> Redo
+                                </button>
+                                <button id="copyBtn" class="flex items-center p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md text-sm disabled:opacity-50" title="Copy Content to Clipboard">
+                                    <i data-lucide="copy" class="w-4 h-4 mr-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    <textarea id="notesArea" placeholder="Drag the bottom corner to resize."
+                        class="flex-grow p-4 text-gray-700 text-base leading-relaxed focus:outline-none border border-gray-200 rounded-lg"></textarea>
+                </div>
+            </details>
+            <p class="mt-4 text-sm text-gray-500 text-center">All links open in a new tab.</p>
+        </div>
+    </details>
 </div>
-</div>
-<div id="tat-targets-container" class="flex-1 bg-blue-50 p-2.5 rounded-xl border border-blue-200">
-<p class="text-blue-700 font-bold text-2xl mb-2 pb-1 border-b border-blue-200">TAT Targets</p>
-<dl id="live-batch-targets" class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-<dt class="font-medium text-lg text-gray-700 flex items-center">
-<span class="w-2 h-2 bg-orange-400 rounded-full mr-1.5"></span>
-FR <span class="text-gray-500 ml-1" id="fr-multiplier-label">(0.5x)</span>
-</dt>
-<dd class="text-right">
-<span id="fr-target-display" class="target-chip fr text-sm px-2.5 py-1">00:00:00</span>
-</dd>
-<dt class="font-medium text-lg text-gray-700 flex items-center">
-<span class="w-2 h-2 bg-lime-500 rounded-full mr-1.5"></span>
-<span id="sv-label-text">SV</span> <span class="text-gray-500 ml-1" id="sv-multiplier-label">(1.5x)</span>
-</dt>
-<dd class="text-right">
-<span id="sv-target-display" class="target-chip sv text-sm px-2.5 py-1">00:00:00</span>
-</dd>
-<dt
-class="col-span-1 pt-2 mt-.5 border-t border-blue-200 font-bold text-gray-800 flex items-center text-lg">
-<span class="w-2.5 h-2.5 bg-indigo-600 rounded-full mr-1.5"></span>
-Overall <span class="text-gray-600 ml-1" id="overall-multiplier-label">(2.0x)</span>
-</dt>
-<dd class="pt-2 mt-.5 border-t border-blue-200 text-right">
-<span id="overall-target-display"
-class="target-chip overall mt-.5 text-base px-3 py-1.5 font-bold">00:00:00</span>
-</dd>
-</dl>
-<dl id="hp-targets" class="hidden grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-<dt
-class="col-span-1 font-bold text-gray-800 flex items-center text-lg">
-<span class="w-2.5 h-2.5 bg-orange-400 rounded-full mr-1.5"></span>
-FR Target
-</dt>
-<dd class="text-right">
-<span
-class="target-chip fr mt-.5 text-base px-3 py-1.5 font-bold">01:30:00</span>
-</dd>
-<dt class="col-span-2 text-sm text-gray-600 p-4 bg-yellow-50 border border-yellow-200 rounded-lg mt-4">
-HP files have a fixed 1.5-hour TAT regardless of audio length.
-</dt>
-</dl>
-</div>
-</div>
-<div class="flex items-center p-2 bg-red-50 rounded-xl border border-red-200 w-full mt-4">
-<input id="beep-alerts" type="checkbox" checked
-class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
-<label for="beep-alerts" id="beep-alerts-label" class="ml-2 block text-sm font-medium text-red-700">
-Beep Alerts (FR: 5 min left · SV: 10 & 5 min left)
-</label>
-</div>
-</div>
-<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-cyan-500">
-<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
-<i data-lucide="clock" class="w-6 h-6 text-cyan-600"></i>
-<span class="relative">
-WORKFLOW TIMER AND PROGRESS
-<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"></span>
-</span>
-</h2>
-<div id="live-batch-buttons" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
-<button id="btn-fr-started" class="workflow-btn btn-fr-started" disabled>1) FR Started</button>
-<button id="btn-fr-ended" class="workflow-btn btn-fr-ended" disabled>2) FR Ended</button>
-<button id="btn-sv-started" class="workflow-btn btn-sv-started" disabled>3) SV Started</button>
-<button id="btn-sv-ended" class="workflow-btn btn-sv-ended" disabled>4) SV Ended</button>
-<button id="btn-log-another" class="workflow-btn col-span-2 sm:col-span-1">Reset</button>
-</div>
-<div id="aiera-buttons" class="hidden grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
-<button id="btn-aiera-fr-started" class="workflow-btn btn-aiera-started btn-sm-text" disabled>1) Aiera – FR Started</button>
-<button id="btn-aiera-fr-ended" class="workflow-btn btn-aiera-started btn-sm-text" disabled>2) Aiera – FR Ended</button>
-<button id="btn-aiera-sv-started" class="workflow-btn btn-aiera-svhp-started btn-sm-text" disabled>3) SV + HP Started</button>
-<button id="btn-aiera-sv-ended" class="workflow-btn btn-aiera-svhp-ended btn-sm-text" disabled>4) SV + HP Ended</button>
-<button id="btn-log-another-aiera" class="workflow-btn col-span-2 sm:col-span-1">Reset</button>
-</div>
-<div id="hp-buttons" class="hidden grid grid-cols-3 gap-3 mb-5">
-<button id="btn-hp-fr-started" class="workflow-btn btn-fr-started col-span-1" disabled>HP - FR Started</button>
-<button id="btn-hp-fr-ended" class="workflow-btn btn-fr-ended col-span-1" disabled>HP - FR Ended</button>
-<button id="btn-log-another-hp" class="workflow-btn col-span-1">Reset</button>
-</div>
-<div class="mb-6">
-<div class="toggle-capsule">
-<button id="toggle-countdown" class="active">COUNTDOWN</button>
-<button id="toggle-stopwatch">STOPWATCH</button>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-4 mb-3 pb-2 border-b-2 border-gray-200 font-bold text-gray-700 text-sm sm:text-base">
-<div>DESCRIPTION</div>
-<div class="text-center">TIME</div>
-</div>
-<div id="live-batch-timers" class="space-y-6">
-<div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
-<div class="text-xl font-bold text-gray-800 self-center">Overall (Total TAT - <span id="overall-tat-label-display">2.0x</span>)</div>
-<div class="text-center flex flex-col items-center">
-<span id="overall-time" class="timer-display inline-block">00:00:00</span>
-<span id="overall-target" class="target-chip overall">Target: 00:00:00</span>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
-<div class="text-xl font-bold text-gray-800 self-center flex flex-col">
-First Review (FR - 0.5x)
-<div id="fr-note-live" class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
-NOTE: After FR, Export to Microsoft Word (.docx) → Rename file to
-<span class="font-mono text-[0.55rem] border bg-gray-100/60 px-1 rounded">Date - Surname, First Name - File Number <span id="aiera-note-suffix"></span></span>
-→ Upload
-<a href="https://forms.gle/Hxukyvt9dVxzcyUU7" target="_blank" class="text-blue-500 hover:text-blue-600 underline">here</a>. See
-<a href="https://docs.google.com/document/d/15mF1rMT5GEAAWtQw7HOGiT33CeCLglOEG8N-K_Ap9UM/edit?tab=t.0#heading=h.z6xrsh9jk47k" target="_blank" class="text-blue-500 hover:text-blue-600 underline">DITL</a>
-for file format. </div>
-</div>
-<div class="text-center flex flex-col items-center">
-<span id="fr-time" class="timer-display inline-block">00:00:00</span>
-<span id="fr-target" class="target-chip fr">Target: 00:00:00</span>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-4 py-3">
-<div class="text-xl font-bold text-gray-800 self-center flex flex-col">
-<span id="sv-stage-title">Speaker Verified (SV - 1.5x)</span>
-<div class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
-NOTE: After SV, Go to <a id="sv-overview-link" href="https://editor.inflexiontranscribe.com/my-profile" target="_blank" class="text-blue-500 hover:text-blue-600 underline">Overview</a> → Click checkmark to validate.
-</div>
-</div>
-<div class="text-center flex flex-col items-center">
-<span id="sv-time" class="timer-display inline-block">00:00:00</span>
-<span id="sv-target" class="target-chip sv">Target: 00:00:00</span>
-</div>
-</div>
-</div>
-<div id="hp-timer" class="hidden space-y-6">
-<div class="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
-<div class="text-xl font-bold text-gray-800 self-center flex flex-col">
-HP First Review (FR)
-<div class="mt-2 text-gray-500 text-[0.55rem] bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 leading-snug shadow-sm">
-NOTE: HP files have a fixed 1.5-hour TAT. Press "HP - FR Ended" to stop the timer and log the file.
-</div>
-</div>
-<div class="text-center flex flex-col items-center">
-<span id="hp-fr-time" class="timer-display inline-block">01:30:00</span>
-<span id="hp-fr-target" class="target-chip fr">Target: 01:30:00</span>
-</div>
-</div>
-</div>
-</div>
-<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-indigo-500">
-<div class="flex flex-wrap justify-between items-center gap-4 mb-4">
-<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2">
-<i data-lucide="check-square" class="w-6 h-6 text-indigo-600"></i>
-<span class="relative">
-LOGGED SUBMISSIONS
-<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-blue-400 rounded-full"></span>
-</span>
-</h2>
-<div class="flex flex-wrap gap-2">
-<button id="import-logs-btn" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1">
-<i data-lucide="upload" class="w-4 h-4"></i> Import Logs
-</button>
-<button id="export-logs-btn" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-1">
-<i data-lucide="download" class="w-4 h-4"></i> Export Logs
-</button>
-<button id="export-csv-btn" class="px-3 py-1.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium flex items-center gap-1">
-<i data-lucide="table-2" class="w-4 h-4"></i> Export CSV
-</button>
-<button id="clear-all-logs" class="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium flex items-center gap-1">
-<i data-lucide="trash-2" class="w-4 h-4"></i> Clear All
-</button>
-<button id="manual-log-btn" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium flex items-center gap-1">
-<i data-lucide="plus" class="w-4 h-4"></i> Manual Log
-</button>
-</div>
-</div>
-<p class="text-xs text-gray-500 -mt-2 mb-4 px-1">
-Use <strong>Import/Export Logs</strong> to back up or move your data (.json) to another browser.
-Use <strong>Export CSV</strong> to open your logs in Excel or Sheets.
-</p>
-<div id="filter-bar">
-<i data-lucide="filter" class="w-5 h-5 text-gray-500"></i>
-<label for="filter-year">Year:</label>
-<select id="filter-year">
-<option value="all">All Years</option>
-</select>
-<label for="filter-month">Month:</label>
-<select id="filter-month">
-<option value="all">All Months</option>
-</select>
-<label for="date-range-start">Start Date:</label>
-<input type="date" id="date-range-start">
-<label for="date-range-end">End Date:</label>
-<input type="date" id="date-range-end">
-<button id="clear-filter-btn">Clear Filter</button>
-</div>
-<div id="log-toast-container" class="toast-container mb-4 mt-4"></div>
-<div class="grid grid-cols-[2.5fr_1.5fr_1.5fr_1.5fr] gap-4 mb-3 p-3 bg-indigo-100 text-indigo-800 font-bold text-sm sm:text-base rounded-t-lg px-5"><div>File Name & Duration</div>
-<div class="text-center">FR Time / Target</div>
-<div class="text-center">SV Time / Target</div>
-<div class="text-center">Overall / Timestamps</div>
-</div>
-<div id="log-display" class="space-y-4 text-gray-600">
-<p class="px-5 py-3">No files logged yet. Logged times will appear here.</p>
-</div>
-<div id="log-summary" class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-sm font-bold text-indigo-800 text-center">
-Total Work Days: <span id="total-worked-days">0</span> | Total Files: <span id="total-files-footer">0</span> | Total AH: <span id="total-ah">0.00</span>
-</div>
-<p class="mt-4 text-xs text-red-500 font-medium p-2 bg-red-100 rounded-lg border border-red-200"> <span class="text-xs text-red-700 font-semibold mr-1">
-<i data-lucide="triangle-alert" class="w-4 h-4 inline-block align-text-center"></i> Note:
-</span>
-Switching browsers may clear logged data. Export your log data before switching.
-Always check the <strong><a href="https://script.google.com/macros/s/AKfycbxfJiAfQ0s8Yl5JcVvMMJqFbXEvfdNUBDXFqAPEAQHDWZPl96Yzj625DBh7POHV5eZ9/exec" target="_blank" class="text-blue-500 hover:text-blue-600 underline"> Official AH tracker</a></strong> and <strong><a href="https://script.google.com/macros/s/AKfycbwgwhhQlj1mQ6ab30zNOnw5wIgc8fLe9pF475GJwsyxWRYt12wdptO9AGrB5nKQglI/exec" target="_blank" class="text-blue-500 hover:text-blue-600 underline"> File Rework Tracker</a></strong> ‼️</p>
-<input type="file" id="log-import-input" accept=".json" class="hidden">
-</div>
-<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-purple-500">
-<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
-<i data-lucide="bar-chart-3" class="w-6 h-6 text-purple-600"></i>
-<span class="relative">
-PRODUCTIVITY DASHBOARD
-<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"></span>
-</span>
-</h2>
-<div class="stat-grid">
-<div class="stat-card">
-<div class="stat-card-title">Total Files Logged</div>
-<div id="stat-total-files" class="stat-card-value">0</div>
-</div>
-<div class="stat-card">
-<div class="stat-card-title">Total Audio Hours</div>
-<div id="stat-total-ah" class="stat-card-value">0.00</div>
-</div>
-<div class="stat-card">
-<div class="stat-card-title">Total File Types Done</div>
-<div id="stat-file-types" class="stat-card-value">
-<span class="file-type-live">LIVE: 0</span> |
-<span class="file-type-batch">BATCH: 0</span> |
-<span class="file-type-hp">HP: 0</span> |
-<span class="file-type-aiera">AIERA: 0</span> </div>
-</div>
-<div class="stat-card"> <div class="stat-card-title">FR Within TAT Rate</div>
-<div id="stat-ontime-fr" class="stat-card-value ontime-ok mb-2">N/A</div>
-<div id="stat-details-fr" class="text-xs text-gray-600 text-center space-y-1">
-</div>
-</div> <div class="stat-card"> <div class="stat-card-title">SV Within TAT Rate</div>
-<div id="stat-ontime-sv" class="stat-card-value ontime-ok mb-2">N/A</div>
-<div id="stat-details-sv" class="text-xs text-gray-600 text-center space-y-1">
-</div>
-</div>
-<div class="stat-card"> <div class="stat-card-title">Overall TAT Rate</div>
-<div id="stat-ontime-overall" class="stat-card-value ontime-ok mb-2">N/A</div>
-<div id="stat-details-overall" class="text-xs text-gray-600 text-center space-y-1">
-</div>
-</div>
-</div>
-</div>
-<div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-yellow-500">
-<h2 class="relative text-xl font-semibold text-gray-1000 flex items-center gap-2 pb-2 mb-4">
-<i data-lucide="link" class="w-6 h-6 text-yellow-600"></i>
-<span class="relative">
-RESOURCES
-<span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full"></span>
-</span>
-</h2>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-<div class="split-btn-container bg-gradient-to-r from-cyan-500 to-cyan-600">
-<a href="https://editor.inflexiontranscribe.com/dashboard" target="_blank" class="split-btn border-r border-blue-700 gap-2">
-<i data-lucide="layout-dashboard" class="w-5 h-5"></i> Transcribe Dashboard </a>
-<a href="https://staging.editor.inflexion.ai/dashboard" target="_blank" class="split-btn gap-2">
-<i data-lucide="layout-dashboard" class="w-5 h-5"></i> Inflexion Dashboard </a>
-</div>
-<a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl shadow-md hover:from-green-600 hover:to-green-700 transition">
-<i data-lucide="book-open-check" class="w-5 h-5 mr-2"></i> FD Style Guide
-</a>
-<a href="https://docs.google.com/document/d/15mF1rMT5GEAAWtQw7HOGiT33CeCLglOEG8N-K_Ap9UM/edit?tab=t.0#heading=h.7dpb3g8wv29y" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl shadow-md hover:from-purple-600 hover:to-purple-700 transition">
-<i data-lucide="file-text" class="w-5 h-5 mr-2"></i> FD DITL Guide
-</a>
-<a href="https://discord.com/channels/1391591320677519431/1435009120880296006/1435010581571703019" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl shadow-md hover:from-amber-600 hover:to-amber-700 transition">
-<i data-lucide="book-open-check" class="w-5 h-5 mr-2"></i> HP Style Guide
-</a>
-<a href="https://discord.com/channels/1391591320677519431/1391597777120923748" target="_blank" class="flex items-center justify-center p-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:from-indigo-600 hover:to-indigo-700 transition">
-<i data-lucide="message-circle" class="w-5 h-5 mr-2"></i> FD Discord Server
-</a>
-<div class="split-btn-container bg-gradient-to-r from-pink-500 to-pink-600">
-<a href="https://docs.google.com/document/d/123h1eeF1s5J16t6qSvdSN2Z_UI9eymJkLF8z60sqEcM/edit?tab=t.0" target="_blank" class="split-btn border-r border-pink-700 gap-2">
-<i data-lucide="book-open-check" class="w-5 h-5"></i> Aiera Style Guide
-</a>
-<a href="https://docs.google.com/spreadsheets/d/1bgFa-izU7GtDy1eeqjpt8FFbFyVelml6xV43TJ-00HA/edit?gid=1021819507#gid=1021819507" target="_blank" class="split-btn gap-2">
-<i data-lucide="diff" class="w-5 h-5"></i> Aiera SG Diff Sheet
-</a>
-</div>
-</div>
-<details class="speaker-db mt-6 border-t border-gray-200 pt-6">
-<summary>
-<i data-lucide="chevron-right" class="group-icon w-5 h-5"></i><i data-lucide="circle-user" class="w-5 h-5"></i>
-SPEAKERS DATABASE
-</summary>
-<div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-<p class="text-sm text-gray-600 mb-4">
-This is your personal database for formatted and verified speakers. Add a speaker according to the format in the
-<a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="text-blue-500 hover:text-blue-600 underline">FD Style Guide</a>.
-<strong>This is only visible to you.</strong>
-</p>
-<div id="speakerMessageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg mb-2">
-<p id="speakerMessageText" class="text-xs font-medium"></p>
-</div>
-<div class="flex flex-col sm:flex-row gap-2 mb-1">
-<button id="add-speaker-btn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex-shrink-0 flex items-center gap-1">
-<i data-lucide="plus" class="w-4 h-4"></i> Add a Speaker
-</button>
-<input type="text" id="speaker-search" placeholder="Search speakers..." class="flex-1 p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
-<div class="flex flex-shrink-0 gap-2">
-<button id="import-speaker-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex-shrink-0 flex items-center gap-1">
-<i data-lucide="upload" class="w-4 h-4"></i> Import
-</button>
-<button id="export-speaker-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex-shrink-0 flex items-center gap-1">
-<i data-lucide="download" class="w-4 h-4"></i> Export
-</button>
-</div>
-</div>
-<p class="text-xs text-gray-500 mt-3">Use <strong>Import/Export (.json)</strong> to back up or move your list to a new browser.</p>
-</div> <div id="speaker-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
-</div>
-<input type="file" id="speaker-import-input" accept=".json" class="hidden">
-</details>
-<details class="notes-db mt-6 border-t border-gray-200 pt-6 text-lg">
-<summary style="list-style: none; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 700; color: #10b981;">
-<i data-lucide="chevron-right" class="group-icon w-5 h-5"></i>
-<i data-lucide="edit-3" class="w-5 h-5"></i>
-QUICK NOTEPAD
-</summary>
-<div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 notes-panel">
-<header class="p-2 border-b border-gray-200 flex items-center justify-between mb-2">
-<p class="text-sm text-gray-600 flex-grow pr-4">
-This is your private, persistent notepad. Quickly jot down ideas, temporary file names, or reminders.
-</p>
-<div class="flex flex-col items-end space-y-2 flex-shrink-0">
-<div id="messageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg">
-<p id="messageText" class="text-xs font-medium"></p>
-</div>
-<div class="flex space-x-2">
-<button id="clearBtn" class="flex items-center p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Clear All Text">
-<i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Clear
-</button>
-<button id="undoBtn" class="flex items-center p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Undo Last Action" disabled>
-<i data-lucide="undo-2" class="w-4 h-4 mr-1"></i> Undo
-</button>
-<button id="redoBtn" class="flex items-center p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm text-sm disabled:opacity-50" title="Redo Last Action" disabled>
-<i data-lucide="redo-2" class="w-4 h-4 mr-1"></i> Redo
-</button>
-<button id="copyBtn" class="flex items-center p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md text-sm disabled:opacity-50" title="Copy Content to Clipboard">
-<i data-lucide="copy" class="w-4 h-4 mr-1"></i> Copy
-</button>
-</div>
-</div>
-</header>
-<textarea id="notesArea" placeholder="Drag the bottom corner to resize."
-class="flex-grow p-4 text-gray-700 text-base leading-relaxed focus:outline-none border border-gray-200 rounded-lg"></textarea>
-</div>
-</details>
-<p class="mt-4 text-sm text-gray-500 text-center">All links open in a new tab.</p>
-</div>
+
 <footer class="mt-1 text-center text-xs italic text-gray-400">
-Made by <span class="text-pink-500 font-semibold"> Arianne ✨</span> | Nov. 2025
+Made by <span class="text-pink-500 font-semibold"> Arianne ✨ </span> | Nov. 2025
 </footer>
 </div>
 <div id="log-edit-modal" class="modal-overlay">
 <div class="modal-box">
-<h3 id="modal-title">Manual File Log</h3> <p id="modal-description" class="text-sm text-gray-600 mb-4">Log a file you completed without using the timer.
-Timestamps will be marked N/A, but all TATs will be calculated.
-You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.</p>
+<h3 id="modal-title">Manual File Log</h3> 
+<p id="modal-description" class="text-sm text-gray-600 mb-4">Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.</p>
 <div class="modal-form">
 <div class="form-group full-span">
 <label for="modal-file-name">File Name</label>
@@ -871,7 +1224,8 @@ Please ensure you are only logging files you have actually completed.
 </div>
 </div>
 </div>
-</div> <script>
+</div> 
+<script>
 // === GLOBAL STATE ===
 const STATE = {
 isTimerRunning: false,
@@ -887,22 +1241,25 @@ loggedFiles: [],
 currentStopwatchSeconds: { fr: 0, sv: 0, overall: 0 },
 clockIntervalId: null,
 viewMode: 'countdown',
-fileType: 'live', // 🚀 Default to 'live'
-speakers: [], // 🚀 ADDED SPEAKER STATE
-filterMonth: 'all', // ⭐⭐⭐ NEW FILTER STATE
-filterYear: 'all', // ⭐⭐⭐ NEW FILTER STATE
-editingLogIndex: null // ⭐⭐⭐ NEW: Tracks which log is being edited
+fileType: 'live', //  Default to 'live'
+speakers: [], //  ADDED SPEAKER STATE
+filterMonth: 'all', //  NEW FILTER STATE
+filterYear: 'all', //  NEW FILTER STATE
+/* SOURCE 119 */
+editingLogIndex: null //  NEW: Tracks which log is being edited
 };
 // === NOTES STATE ===
+/* SOURCE 120 */
 const NOTES_STATE = { history: [''], historyIndex: 0, isTyping: false, maxHistory: 50 };
-// === DOM ===
+// === DOM (MODIFIED FOR NEW CLOCK) ===
 const DOM = {
 // --- Original Elements ---
 fileNameInput: document.getElementById('file-name'),
 audioInput: document.getElementById('audio-length'),
 audioError: document.getElementById('audio-error'),
 beepAlerts: document.getElementById('beep-alerts'),
-beepAlertsLabel: document.getElementById('beep-alerts-label'), // 🚀 ADDED
+beepAlertsLabel: document.getElementById('beep-alerts-label'), //  ADDED
+// MODIFIED TO SELECT THE SPAN INSTEAD OF THE WHOLE CONTAINER
 welcomeMessageContainer: document.getElementById('welcome-message-container').querySelector('span'),
 btnFRStarted: document.getElementById('btn-fr-started'),
 btnFREnded: document.getElementById('btn-fr-ended'),
@@ -964,6 +1321,7 @@ modalCancelBtn: document.getElementById('modal-cancel-btn'),
 modalSaveBtn: document.getElementById('modal-save-btn'),
 modalError: document.getElementById('modal-error'),
 modalFileName: document.getElementById('modal-file-name'),
+/* SOURCE 121 */
 modalFileType: document.getElementById('modal-file-type'),
 modalLogDate: document.getElementById('modal-log-date'),
 modalAudioLength: document.getElementById('modal-audio-length'),
@@ -1000,41 +1358,54 @@ dateRangeEnd: document.getElementById('date-range-end'),
 // --- Filter Bar Elements ---
 filterYearSelect: document.getElementById('filter-year'),
 filterMonthSelect: document.getElementById('filter-month'),
-clearFilterBtn: document.getElementById('clear-filter-btn')
+clearFilterBtn: document.getElementById('clear-filter-btn'),
+// --- Performance Analysis Elements (NEW) ---
+cumulativeTatChart: document.getElementById('cumulativeTatChart'),
+tatChartType: document.getElementById('tat-chart-type'),
+currentChartInstance: null, // To store the Chart.js object
+// --- Collapsible Element (NEW) ---
+watrChartDetails: document.getElementById('watr-chart-details'),
+
+// --- NEW CLOCK ELEMENTS ---
+timeDisplay: document.getElementById('time-display'),
+dateDisplay: document.getElementById('date-display')
+/* SOURCE 122 */
 };
 // === UTILITIES (MODIFIED FOR MP3 ALERTS) ===
 // Helper function to get the raw content URL from the GitHub file page URL
+/* SOURCE 123 */
 function getRawUrl(githubUrl) {
-  // Replaces 'github.com' with 'raw.githubusercontent.com' and removes '/blob'
-  return githubUrl.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob', '');
+  // Replaces 'github.com' with 'raw.githubusercontent.com' and removes '/blob'
+  return githubUrl.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob', '');
 }
- 
+ 
 // --- NEW AUDIO URL CONSTANTS ---
 // NOTE: These URLs must point to the raw file paths on GitHub for the host to resolve them.
-// If your repository name is "fdeditor-workflowlogger", replace the middle part accordingly.
+/* SOURCE 124, 125 */
 const REPO_PATH = 'ariiannemay/fdeditor-workflowlogger/main/';
 const BASE_URL = 'https://raw.githubusercontent.com/' + REPO_PATH;
 
+/* SOURCE 126 */
 const AUDIO_URLS = {
-  'file_logged': BASE_URL + 'file_logged.mp3',
-  'stage_done': BASE_URL + 'stage_done.mp3',
-  '5_minutes_left': BASE_URL + '5_minutes_left.mp3',
-  '10_minutes_left': BASE_URL + '10_minutes_left.mp3',
-  '30_minutes_left': BASE_URL + '30_minutes_left.mp3',
-  '1_hour_left': BASE_URL + '1_hour_left.mp3',
+  'file_logged': BASE_URL + 'file_logged.mp3',
+  'stage_done': BASE_URL + 'stage_done.mp3',
+  '5_minutes_left': BASE_URL + '5_minutes_left.mp3',
+  '10_minutes_left': BASE_URL + '10_minutes_left.mp3',
+  '30_minutes_left': BASE_URL + '30_minutes_left.mp3',
+  '1_hour_left': BASE_URL + '1_hour_left.mp3',
 };
- 
 // --- NEW FUNCTION: UNLOCK AUDIO ---
 // This function plays and immediately pauses the audio to satisfy browser autoplay requirements.
+/* SOURCE 127, 128 */
 function unlockAudioPlayback() {
     // Check local storage flag to only run once per session
     let unlocked = localStorage.getItem('audio_unlocked') === 'true';
-    if (unlocked) return; 
+if (unlocked) return; 
 
     const audioKeys = Object.keys(AUDIO_URLS);
+/* SOURCE 129 */
     let attempts = 0;
-
-    audioKeys.forEach(key => {
+audioKeys.forEach(key => {
         try {
             const audio = new Audio(AUDIO_URLS[key]);
             // Attempt to play and immediately pause
@@ -1043,6 +1414,7 @@ function unlockAudioPlayback() {
                 audio.currentTime = 0;
                 attempts++;
                 // If at least one successful attempt is made, we are good to go
+                /* SOURCE 130 */
                 if (attempts > 0) {
                     localStorage.setItem('audio_unlocked', 'true');
                 }
@@ -1052,55 +1424,91 @@ function unlockAudioPlayback() {
                 console.warn(`Initial audio unlock failed for ${key}:`, e);
             });
         } catch (e) {
+            /* SOURCE 131 */
             console.error("Audio initialization error:", e);
         }
     });
 }
 // --- NEW AUDIO PLAYER FUNCTION ---
 // Replaces the old 'beep' logic with an actual audio player
+/* SOURCE 132, 133 */
 function playAudioAlert(alertType) {
-  if (!DOM.beepAlerts.checked) return;
-  try {
-      const audio = new Audio(AUDIO_URLS[alertType]);
-      // IMPORTANT: This relies on unlockAudioPlayback having been called first (on click)
-      audio.play().catch(e => console.warn(`Audio playback failed for ${alertType}:`, e));
-  } catch(e) {
-      console.warn("Audio player initialization failed:", e);
-  }
+  if (!DOM.beepAlerts.checked) return;
+try {
+      const audio = new Audio(AUDIO_URLS[alertType]);
+      // IMPORTANT: This relies on unlockAudioPlayback having been called first (on click)
+      audio.play().catch(e => console.warn(`Audio playback failed for ${alertType}:`, e));
+} catch(e) {
+      console.warn("Audio player initialization failed:", e);
+  }
 }
- 
+ 
+/* SOURCE 134 */
 function timeToSeconds(t) { if (!t || !t.match(/^\d{2}:\d{2}:\d{2}$/)) return 0; const [h,m,s]=t.split(':').map(Number); return h*3600+m*60+s; }
 function secondsToTime(s) {
-  const neg = s < 0; s = Math.abs(s);
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  return (neg?'-':'') + [h,m,sec].map(v=>v.toString().padStart(2,'0')).join(':');
+/* SOURCE 135, 136 */
+  const neg = s < 0; s = Math.abs(s);
+const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return (neg?'-':'') + [h,m,sec].map(v=>v.toString().padStart(2,'0')).join(':');
 }
+/* SOURCE 137 */
 function formatTimestamp(ts) {
-  if (!ts) return 'N/A';
-  const d = new Date(ts);
-  return `${d.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit'})} ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}`;
+  if (!ts) return 'N/A';
+  const d = new Date(ts);
+  return `${d.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit'})} ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}`;
 }
+/* SOURCE 138 */
 function formatLogDate(ts) {
-  if (!ts) return 'N/A';
-  const d = new Date(ts);
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  if (!ts) return 'N/A';
+  const d = new Date(ts);
+return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
+/* SOURCE 139, 140 */
 function getMonthYearKey(ts) {
-  if (!ts) return 'Unknown Date';
-  const d = new Date(ts);
-  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  if (!ts) return 'N/A';
+const d = new Date(ts);
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 }
 // Renamed old beep to stub, new logic uses playAudioAlert
+/* SOURCE 141 */
 function beep() {
-  // This is the old function logic, which we are replacing with MP3s, so we'll leave it as a no-op or console warning if called incorrectly
-  console.warn("Legacy beep() function called. Using new audio alert system.");
+  // This is the old function logic, which we are replacing with MP3s, so we'll leave it as a no-op or console warning if called incorrectly
+  console.warn("Legacy beep() function called. Using new audio alert system.");
 }
+// === MODIFIED CLOCK FUNCTION (To use new DOM elements) ===
 function updateLiveClock() {
-  const now = new Date();
-  const opts = { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true };
-  DOM.welcomeMessageContainer.innerHTML = `Welcome, FD Editor! Your current local date and time is <span class="text-red-600 font-bold">${now.toLocaleString('en-US',opts)}</span>`;
+  const now = new Date();
+/* SOURCE 142 */
+  const opts = { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true };
+// 1. Update the Welcome Message Container
+/* SOURCE 143 */
+DOM.welcomeMessageContainer.innerHTML = `Welcome, FD Editor! `;
+    
+// 2. Format and update the Digital Clock Widget
+    const timeOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit', 
+        hour12: true 
+    };
+    const currentTime = now.toLocaleTimeString('en-US', timeOptions);
+    
+    const dateOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    };
+    const currentDate = now.toLocaleDateString('en-US', dateOptions).toUpperCase();
+    
+    // Check if the new elements exist before trying to update them
+    if (DOM.timeDisplay && DOM.dateDisplay) {
+        DOM.timeDisplay.textContent = currentTime;
+        DOM.dateDisplay.textContent = currentDate;
+    }
 }
 // === GORGEOUS TOAST FUNCTION ===
+/* SOURCE 144, 145, 146 */
 function showLogToast(message, isSuccess = true) {
 const toast = document.createElement('div');
 toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
@@ -1120,17 +1528,19 @@ toast.style.transform = 'translateY(-10px)';
 setTimeout(() => toast.remove(), 500);
 }, 3000);
 }
-// === 🚀 CRASH RECOVERY ===
+// ===  CRASH RECOVERY ===
+/* SOURCE 147 */
 function saveRecoveryData() {
 const recoveryState = { ...STATE };
 delete recoveryState.loggedFiles; // Don't save logs
-delete recoveryState.speakers;   // Don't save speakers
+delete recoveryState.speakers;
 localStorage.setItem('fd-timer-recovery-data', JSON.stringify(recoveryState));
 }
 function clearRecoveryData() {
 localStorage.removeItem('fd-timer-recovery-data');
 }
 // === MODIFIED MODE TOGGLER (FIXED) ===
+/* SOURCE 148, 149, 150, 151, 152 */
 function toggleMode(mode) {
 // 1. DEFINE CONSTANTS: Place the links here for easy modification.
 const defaultLink = 'https://editor.inflexiontranscribe.com/my-profile';
@@ -1157,6 +1567,7 @@ if (mode === 'aiera') {
 // AIERA MODE SETUP
 DOM.aieraButtons.classList.remove('hidden');
 DOM.liveBatchTargets.classList.remove('hidden');
+/* SOURCE 153, 154, 155, 156 */
 DOM.liveBatchTimers.classList.remove('hidden');
 // Update Labels for AIERA (3.5x total)
 document.getElementById('sv-label-text').textContent = 'SV + HP';
@@ -1165,7 +1576,7 @@ document.getElementById('overall-multiplier-label').textContent = '(3.5x)';
 document.getElementById('sv-stage-title').textContent = 'SV + HP (3.0x)';
 document.getElementById('aiera-note-suffix').textContent = '- AE';
 DOM.beepAlertsLabel.textContent = 'Beep Alerts (FR: 5 min left · SV+HP: 1hr, 30 mins & 5 min left)';
-// ⭐ CRITICAL LINK OVERRIDE FOR AIERA:
+//  CRITICAL LINK OVERRIDE FOR AIERA:
 if (DOM.svOverviewLink) {
 DOM.svOverviewLink.href = aieraLink;
 }
@@ -1173,6 +1584,7 @@ DOM.svOverviewLink.href = aieraLink;
 else if (mode === 'hp') {
 // HP MODE SETUP
 DOM.hpButtons.classList.remove('hidden');
+/* SOURCE 157, 158, 159, 160 */
 DOM.hpTargets.classList.remove('hidden');
 DOM.hpTargets.classList.add('grid');
 DOM.hpTimer.classList.remove('hidden');
@@ -1184,32 +1596,35 @@ DOM.hpFrTime.textContent = secondsToTime(hpTargetSeconds);
 DOM.hpFrTarget.textContent = `Target: ${secondsToTime(hpTargetSeconds)}`;
 DOM.beepAlertsLabel.textContent = 'Beep Alerts (FR: 1 hour, 30 mins, & 5 mins left)';
 }
-else { // 'live' or 'batch' mode
+else { // 'live' or 'batch'
 // LIVE/BATCH MODE SETUP
 DOM.liveBatchButtons.classList.remove('hidden');
 DOM.liveBatchTargets.classList.remove('hidden');
+/* SOURCE 161 */
 DOM.liveBatchTimers.classList.remove('hidden');
-// ⭐ DEFAULT LINK SETTING FOR LIVE/BATCH:
+//  DEFAULT LINK SETTING FOR LIVE/BATCH:
 if (DOM.svOverviewLink) {
 DOM.svOverviewLink.href = defaultLink;
 }
 }
 // Re-run input handler and visuals
 handleAudioInput(null, true);
+/* SOURCE 162 */
 updateButtonVisuals();
 }
 // === TARGETS & DISPLAY ===
+/* SOURCE 163, 164, 165, 166, 167, 168, 169, 170 */
 function updateTargets(audioSec) {
 STATE.audioLengthSeconds = audioSec;
 // Note: HP targets are set in toggleMode, so we handle Live/Batch/AIERA here
 if (STATE.fileType === 'aiera') {
-// ⭐⭐⭐ AIERA LOGIC (0.5x / 3.0x / 3.5x) ⭐⭐⭐
+//  AIERA LOGIC (0.5x / 3.0x / 3.5x) 
 STATE.tatTargets.fr = Math.round(audioSec * 0.5);
 STATE.tatTargets.sv = Math.round(audioSec * 3.0);
 STATE.tatTargets.overall = Math.round(audioSec * 3.5);
 }
 else if (STATE.fileType === 'live' || STATE.fileType === 'batch') {
-// ⭐⭐⭐ LIVE/BATCH LOGIC (0.5x / 1.5x / 2.0x) ⭐⭐⭐
+//  LIVE/BATCH LOGIC (0.5x / 1.5x / 2.0x) 
 STATE.tatTargets.fr = Math.round(audioSec * 0.5);
 STATE.tatTargets.sv = Math.round(audioSec * 1.5);
 STATE.tatTargets.overall = Math.round(audioSec * 2.0);
@@ -1237,121 +1652,129 @@ updateButtonVisuals();
 }
 // === MODIFIED BEEP LOGIC IN updateDisplay (UPDATED FOR MP3S) ===
 function updateDisplay() {
-  if (!STATE.frStartTime && STATE.audioLengthSeconds === 0 && (STATE.fileType !== 'hp')) return;
-  if (!STATE.frStartTime && STATE.fileType === 'hp') {
-  // In HP mode, we can start timer without audio length
-  } else if (!STATE.frStartTime) {
-  return;
-  }
-  const now = Date.now();
-  if (STATE.frStartTime) {
-  const end = STATE.frEndTime || now;
-  STATE.currentStopwatchSeconds.fr = Math.floor((end - STATE.frStartTime) / 1000);
-  }
-  if (STATE.svStartTime) {
-  const end = STATE.svEndTime || now;
-  STATE.currentStopwatchSeconds.sv = Math.floor((end - STATE.svStartTime) / 1000);
-  }
-  if (STATE.frStartTime) {
-  // In HP mode, overall time is just FR time
-  const end = STATE.fileType === 'hp' ? (STATE.frEndTime || now) : (STATE.svEndTime || now);
-  STATE.currentStopwatchSeconds.overall = Math.floor((end - STATE.frStartTime) / 1000);
-  }
-  const showCountdown = STATE.viewMode === 'countdown';
-  // Get correct targets based on mode
-  const frTarget = STATE.tatTargets.fr;
-  const svTarget = STATE.tatTargets.sv;
-  const ovTarget = STATE.tatTargets.overall;
-  const frCD = secondsToTime(frTarget - STATE.currentStopwatchSeconds.fr);
-  const svCD = secondsToTime(svTarget - STATE.currentStopwatchSeconds.sv);
-  const ovCD = secondsToTime(ovTarget - STATE.currentStopwatchSeconds.overall);
-  const frSW = secondsToTime(STATE.currentStopwatchSeconds.fr);
-  const svSW = secondsToTime(STATE.currentStopwatchSeconds.sv);
-  const ovSW = secondsToTime(STATE.currentStopwatchSeconds.overall);
-  // Update the correct timer display
-  if (STATE.fileType === 'hp') {
-      DOM.hpFrTime.textContent = showCountdown ? frCD : frSW;
-      DOM.hpFrTime.classList.toggle('overdue', (frTarget > 0 && STATE.currentStopwatchSeconds.fr > frTarget));
-  } else {
-      DOM.frTime.textContent = showCountdown ? frCD : frSW;
-      DOM.svTime.textContent = showCountdown ? svCD : svSW;
-      DOM.overallTime.textContent = showCountdown ? ovCD : ovSW;
-      DOM.frTime.classList.toggle('overdue', (frTarget > 0 && STATE.currentStopwatchSeconds.fr > frTarget));
-      DOM.svTime.classList.toggle('overdue', (svTarget > 0 && STATE.currentStopwatchSeconds.sv > svTarget));
-      DOM.overallTime.classList.toggle('overdue', (ovTarget > 0 && STATE.currentStopwatchSeconds.overall > ovTarget));
-  }
- 
-  // === NEW MP3 BEEP ALERT LOGIC (REPLACING OLD BEEP) ===
-  if (showCountdown && DOM.beepAlerts.checked) {
-      const frLeft = frTarget - STATE.currentStopwatchSeconds.fr;
-      const svLeft = svTarget - STATE.currentStopwatchSeconds.sv;
-      const frTimerDisplay = STATE.fileType === 'hp' ? DOM.hpFrTime : DOM.frTime;
- 
-      if (STATE.fileType === 'hp') {
-          // HP Beeps: 1hr (3600s), 30min (1800s), 5min (300s)
-          if (frLeft === 3600) {
-              playAudioAlert('1_hour_left');
-              frTimerDisplay.classList.add('beep-active');
-              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
-          } else if (frLeft === 1800) {
-              playAudioAlert('30_minutes_left');
-              frTimerDisplay.classList.add('beep-active');
-              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
-          } else if (frLeft === 300) {
-              playAudioAlert('5_minutes_left');
-              frTimerDisplay.classList.add('beep-active');
-              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
-          }
-      } else if (STATE.fileType === 'aiera') {
-          // AIERA LOGIC (FR: 5min; SV+HP: 1hr, 30min, 5min)
-          // FR Beep: 5min (300s)
-          if (frLeft === 300) {
-              playAudioAlert('5_minutes_left');
-              DOM.frTime.classList.add('beep-active');
-              setTimeout(()=>DOM.frTime.classList.remove('beep-active'), 500);
-          }
-          // SV+HP Beep: 1hr (3600s), 30min (1800s), 5min (300s)
-          if (svLeft === 3600) {
-              playAudioAlert('1_hour_left');
-              DOM.svTime.classList.add('beep-active');
-              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
-          } else if (svLeft === 1800) {
-              playAudioAlert('30_minutes_left');
-              DOM.svTime.classList.add('beep-active');
-              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
-          } else if (svLeft === 300) {
-              playAudioAlert('5_minutes_left');
-              DOM.svTime.classList.add('beep-active');
-              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
-          }
-      } else { // 'live' or 'batch'
-          // LIVE/BATCH LOGIC (FR: 5min; SV: 10min, 5min)
-          // FR Beep: 5min (300s)
-          if (frLeft === 300) {
-              playAudioAlert('5_minutes_left');
-              frTimerDisplay.classList.add('beep-active');
-              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
-          }
-          // SV Beep: 10min (600s), 5min (300s)
-          if (svLeft === 600) {
-              playAudioAlert('10_minutes_left');
-              DOM.svTime.classList.add('beep-active');
-              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
-          } else if (svLeft === 300) {
-              playAudioAlert('5_minutes_left');
-              DOM.svTime.classList.add('beep-active');
-              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
-          }
-      }
-  }
+  /* SOURCE 171, 172, 173, 174, 175, 176, 177, 178, 179 */
+  if (!STATE.frStartTime && STATE.audioLengthSeconds === 0 && (STATE.fileType !== 'hp')) return;
+if (!STATE.frStartTime && STATE.fileType === 'hp') {
+  // In HP mode, we can start timer without audio length
+  } else if (!STATE.frStartTime) {
+  return;
+}
+  const now = Date.now();
+  if (STATE.frStartTime) {
+  const end = STATE.frEndTime || now;
+STATE.currentStopwatchSeconds.fr = Math.floor((end - STATE.frStartTime) / 1000);
+  }
+  if (STATE.svStartTime) {
+  const end = STATE.svEndTime || now;
+STATE.currentStopwatchSeconds.sv = Math.floor((end - STATE.svStartTime) / 1000);
+  }
+  if (STATE.frStartTime) {
+  // In HP mode, overall time is just FR time
+  const end = STATE.fileType === 'hp' ? (STATE.frEndTime || now) : (STATE.svEndTime || now);
+STATE.currentStopwatchSeconds.overall = Math.floor((end - STATE.frStartTime) / 1000);
+}
+  const showCountdown = STATE.viewMode === 'countdown';
+  // Get correct targets based on mode
+  const frTarget = STATE.tatTargets.fr;
+const svTarget = STATE.tatTargets.sv;
+  const ovTarget = STATE.tatTargets.overall;
+  const frCD = secondsToTime(frTarget - STATE.currentStopwatchSeconds.fr);
+  const svCD = secondsToTime(svTarget - STATE.currentStopwatchSeconds.sv);
+const ovCD = secondsToTime(ovTarget - STATE.currentStopwatchSeconds.overall);
+  const frSW = secondsToTime(STATE.currentStopwatchSeconds.fr);
+  const svSW = secondsToTime(STATE.currentStopwatchSeconds.sv);
+  const ovSW = secondsToTime(STATE.currentStopwatchSeconds.overall);
+// Update the correct timer display
+  if (STATE.fileType === 'hp') {
+      /* SOURCE 180 */
+      DOM.hpFrTime.textContent = showCountdown ? frCD : frSW;
+DOM.hpFrTime.classList.toggle('overdue', (frTarget > 0 && STATE.currentStopwatchSeconds.fr > frTarget));
+  } else {
+      /* SOURCE 181, 182, 183 */
+      DOM.frTime.textContent = showCountdown ? frCD : frSW;
+DOM.svTime.textContent = showCountdown ? svCD : svSW;
+      DOM.overallTime.textContent = showCountdown ? ovCD : ovSW;
+DOM.frTime.classList.toggle('overdue', (frTarget > 0 && STATE.currentStopwatchSeconds.fr > frTarget));
+DOM.svTime.classList.toggle('overdue', (svTarget > 0 && STATE.currentStopwatchSeconds.sv > svTarget));
+DOM.overallTime.classList.toggle('overdue', (ovTarget > 0 && STATE.currentStopwatchSeconds.overall > ovTarget));
+  }
+ 
+  // === NEW MP3 BEEP ALERT LOGIC (REPLACING OLD BEEP) ===
+  if (showCountdown && DOM.beepAlerts.checked) {
+      /* SOURCE 184, 185, 186, 187, 188 */
+      const frLeft = frTarget - STATE.currentStopwatchSeconds.fr;
+const svLeft = svTarget - STATE.currentStopwatchSeconds.sv;
+      const frTimerDisplay = STATE.fileType === 'hp' ? DOM.hpFrTime : DOM.frTime;
+if (STATE.fileType === 'hp') {
+          // HP Beeps: 1hr (3600s), 30min (1800s), 5min (300s)
+          if (frLeft === 3600) {
+              playAudioAlert('1_hour_left');
+frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+          } else if (frLeft === 1800) {
+              playAudioAlert('30_minutes_left');
+              frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+} else if (frLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+}
+      } else if (STATE.fileType === 'aiera') {
+          // AIERA LOGIC (FR: 5min; SV+HP: 1hr, 30min, 5min)
+          // FR Beep: 5min (300s)
+          /* SOURCE 189 */
+          if (frLeft === 300) {
+              playAudioAlert('5_minutes_left');
+DOM.frTime.classList.add('beep-active');
+              setTimeout(()=>DOM.frTime.classList.remove('beep-active'), 500);
+          }
+          // SV+HP Beep: 1hr (3600s), 30min (1800s), 5min (300s)
+          /* SOURCE 190, 191, 192 */
+          if (svLeft === 3600) {
+              playAudioAlert('1_hour_left');
+DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          } else if (svLeft === 1800) {
+              playAudioAlert('30_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+} else if (svLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+}
+      } else { // 'live' or 'batch'
+          // LIVE/BATCH LOGIC (FR: 5min; SV: 10min, 5min)
+          // FR Beep: 5min (300s)
+          /* SOURCE 193 */
+          if (frLeft === 300) {
+              playAudioAlert('5_minutes_left');
+frTimerDisplay.classList.add('beep-active');
+              setTimeout(()=>frTimerDisplay.classList.remove('beep-active'), 500);
+          }
+          // SV Beep: 10min (600s), 5min (300s)
+          /* SOURCE 194, 195 */
+          if (svLeft === 600) {
+              playAudioAlert('10_minutes_left');
+DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+          } else if (svLeft === 300) {
+              playAudioAlert('5_minutes_left');
+              DOM.svTime.classList.add('beep-active');
+              setTimeout(()=>DOM.svTime.classList.remove('beep-active'), 500);
+}
+      }
+  }
 }
 // === TIMER CONTROL ===
+/* SOURCE 196, 197 */
 function startMainTimer() {
 if (STATE.intervalId) clearInterval(STATE.intervalId);
 STATE.isTimerRunning = true;
 STATE.intervalId = setInterval(() => {
 updateDisplay();
-saveRecoveryData(); // 🚀 Save state every second while running
+saveRecoveryData(); //  Save state every second while running
 }, 1000);
 updateDisplay();
 }
@@ -1360,6 +1783,7 @@ STATE.isTimerRunning = false;
 if (STATE.intervalId) { clearInterval(STATE.intervalId); STATE.intervalId = null; }
 }
 // === MODIFIED BUTTON VISUALS ===
+/* SOURCE 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215 */
 function updateButtonVisuals() {
 // --- Reset all buttons first ---
 const liveBtns = [DOM.btnFRStarted, DOM.btnFREnded, DOM.btnSVStarted, DOM.btnSVEnded];
@@ -1401,7 +1825,8 @@ DOM.fileNameInput.disabled = true; DOM.fileType.disabled = true; DOM.audioInput.
 }
 // --- Logic for HP Mode ---
 else if (STATE.fileType === 'hp') {
-DOM.audioInput.disabled = false; // Audio length is optional for HP, but shouldn't be disabled
+DOM.audioInput.disabled = false;
+// Audio length is optional for HP, but shouldn't be disabled
 if (!STATE.frStartTime) {
 DOM.btnHpFrStarted.disabled = false;
 } else if (STATE.frStartTime && !STATE.frEndTime) {
@@ -1449,119 +1874,132 @@ liveBtns.forEach(b => b.classList.add('btn-completed-dark'));
 }
 }
 // === MODIFIED BUTTON HANDLER (TO ADD MP3 ALERTS) ===
+/* SOURCE 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247 */
 function handleButtonClick(e) {
-  const id = e.target.id; const now = Date.now();
-  let isStageEnd = false; // Triggers stage_done.mp3
-  let isFileLog = false;  // Triggers file_logged.mp3
- 
-  // --- HP Mode Logic ---
-  if (STATE.fileType === 'hp') {
-      switch(id) {
-          case 'btn-hp-fr-started':
-              if (!STATE.frStartTime) {
-                  // ⭐ CRITICAL FIX: UNLOCK AUDIO HERE ⭐
-                  unlockAudioPlayback();
-                  
-                  STATE.frStartTime = now; STATE.frStartedTimestamp = now;
-                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
-              } break;
-          case 'btn-hp-fr-ended':
-              if (STATE.frStartTime && !STATE.frEndTime) {
-                  STATE.frEndTime = now; STATE.frEndedTimestamp = now;
-                  updateDisplay();
-                  stopMainTimer();
-                  logSubmission(); // Auto-log on finish
-                  isStageEnd = true; // HP-FR-Ended is a stage end
-                  isFileLog = true;  // HP-FR-Ended is also a file log
-              } break;
-          case 'btn-log-another-hp':
-              resetState(); break;
-      }
-  }
-  // --- AIERA Mode Logic ---
-  else if (STATE.fileType === 'aiera') {
-      switch(id) {
-          case 'btn-aiera-fr-started':
-              if (!STATE.frStartTime && STATE.audioLengthSeconds > 0) {
-                  // ⭐ CRITICAL FIX: UNLOCK AUDIO HERE ⭐
-                  unlockAudioPlayback();
-
-                  STATE.frStartTime = now; STATE.frStartedTimestamp = now;
-                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
-              } break;
-          case 'btn-aiera-fr-ended':
-              if (STATE.frStartTime && !STATE.frEndTime) {
-                  STATE.frEndTime = now; STATE.frEndedTimestamp = now;
-                  if (!STATE.svStartTime){ STATE.svStartTime = now; STATE.svStartedTimestamp = now; }
-                  startMainTimer();
-                  isStageEnd = true; // Aiera-FR-Ended is a stage end
-              } break;
-          case 'btn-aiera-sv-started':
-              if (STATE.frEndTime && !STATE.svStartTime) {
-                  STATE.svStartTime = now; STATE.svStartedTimestamp = now; startMainTimer();
-              } break;
-          case 'btn-aiera-sv-ended':
-              if (STATE.svStartTime && !STATE.svEndTime) {
-                  STATE.svEndTime = now; STATE.svEndedTimestamp = now;
-                  updateDisplay(); stopMainTimer(); logSubmission();
-                  isFileLog = true; // SV + HP Ended is a file log
-              } break;
-          case 'btn-log-another-aiera':
-              resetState(); break;
-      }
-  }
-  // --- Live/Batch Mode Logic ---
-  else { // 'live' or 'batch'
-      switch(id){
-          case 'btn-fr-started':
-              if (!STATE.frStartTime && STATE.audioLengthSeconds > 0){
-                  // ⭐ CRITICAL FIX: UNLOCK AUDIO HERE ⭐
-                  unlockAudioPlayback();
-                  
-                  STATE.frStartTime = now; STATE.frStartedTimestamp = now;
-                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
-              } break;
-          case 'btn-fr-ended':
-              if (STATE.frStartTime && !STATE.frEndTime){
-                  STATE.frEndTime = now; STATE.frEndedTimestamp = now;
-                  if (!STATE.svStartTime){ STATE.svStartTime = now; STATE.svStartedTimestamp = now; }
-                  startMainTimer();
-                  isStageEnd = true; // FR-Ended is a stage end
-              } break;
-          case 'btn-sv-started':
-              if (STATE.frEndTime && !STATE.svStartTime){
-                  STATE.svStartTime = now; STATE.svStartedTimestamp = now; startMainTimer();
-              } break;
-          case 'btn-sv-ended':
-              if (STATE.svStartTime && !STATE.svEndTime){
-                  STATE.svEndTime = now; STATE.svEndedTimestamp = now;
-                  updateDisplay();
-                  stopMainTimer();
-                  logSubmission();
-                  isFileLog = true; // SV Ended is a file log
-              } break;
-          case 'btn-log-another':
-              resetState(); break;
-      }
-  }
- 
-  // --- NEW AUDIO TRIGGER LOGIC ---
-  if (isStageEnd) {
-      playAudioAlert('stage_done');
-  }
-  if (isFileLog) {
-      // Delay playing file_logged so it doesn't overlap with stage_done if both trigger
-      setTimeout(() => playAudioAlert('file_logged'), 500);
-  }
-  // --- END NEW AUDIO TRIGGER LOGIC ---
- 
-  // Save state for crash recovery
-  if (id.includes('started') || id.includes('ended')) {
-      saveRecoveryData();
-  }
-  updateButtonVisuals();
+  const id = e.target.id; const now = Date.now();
+let isStageEnd = false; // Triggers stage_done.mp3
+  let isFileLog = false;
+// Triggers file_logged.mp3
+ 
+  // --- HP Mode Logic ---
+  if (STATE.fileType === 'hp') {
+      switch(id) {
+          case 'btn-hp-fr-started':
+              if (!STATE.frStartTime) {
+                  //  CRITICAL FIX: UNLOCK AUDIO HERE 
+                  unlockAudioPlayback();
+STATE.frStartTime = now; STATE.frStartedTimestamp = now;
+                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
+              } break;
+case 'btn-hp-fr-ended':
+              if (STATE.frStartTime && !STATE.frEndTime) {
+                  STATE.frEndTime = now;
+STATE.frEndedTimestamp = now;
+                  updateDisplay();
+                  stopMainTimer();
+                  logSubmission(); // Auto-log on finish
+                  isStageEnd = true;
+// HP-FR-Ended is a stage end
+                  isFileLog = true;
+// HP-FR-Ended is also a file log
+              } break;
+case 'btn-log-another-hp':
+              resetState(); break;
+      }
+  }
+  // --- AIERA Mode Logic ---
+  else if (STATE.fileType === 'aiera') {
+      switch(id) {
+          case 'btn-aiera-fr-started':
+              if (!STATE.frStartTime && STATE.audioLengthSeconds > 0) {
+                  //  CRITICAL FIX: UNLOCK AUDIO HERE 
+                  unlockAudioPlayback();
+STATE.frStartTime = now; STATE.frStartedTimestamp = now;
+                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
+              } break;
+case 'btn-aiera-fr-ended':
+              if (STATE.frStartTime && !STATE.frEndTime) {
+                  STATE.frEndTime = now;
+STATE.frEndedTimestamp = now;
+                  if (!STATE.svStartTime){ STATE.svStartTime = now; STATE.svStartedTimestamp = now;
+}
+                  startMainTimer();
+                  isStageEnd = true;
+// Aiera-FR-Ended is a stage end
+              } break;
+case 'btn-aiera-sv-started':
+              if (STATE.frEndTime && !STATE.svStartTime) {
+                  STATE.svStartTime = now;
+STATE.svStartedTimestamp = now; startMainTimer();
+              } break;
+          case 'btn-aiera-sv-ended':
+              if (STATE.svStartTime && !STATE.svEndTime) {
+                  STATE.svEndTime = now;
+STATE.svEndedTimestamp = now;
+                  updateDisplay(); stopMainTimer(); logSubmission();
+                  isFileLog = true; // SV + HP Ended is a file log
+              } break;
+case 'btn-log-another-aiera':
+              resetState(); break;
+      }
+  }
+  // --- Live/Batch Mode Logic ---
+  else { // 'live' or 'batch'
+      switch(id){
+          case 'btn-fr-started':
+              if (!STATE.frStartTime && STATE.audioLengthSeconds > 0){
+                  //  CRITICAL FIX: UNLOCK AUDIO HERE 
+                  unlockAudioPlayback();
+STATE.frStartTime = now; STATE.frStartedTimestamp = now;
+                  startMainTimer(); STATE.fileName = DOM.fileNameInput.value.trim() || 'Unnamed File';
+              } break;
+case 'btn-fr-ended':
+              if (STATE.frStartTime && !STATE.frEndTime){
+                  STATE.frEndTime = now;
+STATE.frEndedTimestamp = now;
+                  if (!STATE.svStartTime){ STATE.svStartTime = now; STATE.svStartedTimestamp = now;
+}
+                  startMainTimer();
+                  isStageEnd = true;
+// FR-Ended is a stage end
+              } break;
+case 'btn-sv-started':
+              if (STATE.frEndTime && !STATE.svStartTime){
+                  STATE.svStartTime = now;
+STATE.svStartedTimestamp = now; startMainTimer();
+              } break;
+          case 'btn-sv-ended':
+              if (STATE.svStartTime && !STATE.svEndTime){
+                  STATE.svEndTime = now;
+STATE.svEndedTimestamp = now;
+                  updateDisplay();
+                  stopMainTimer();
+                  logSubmission();
+                  isFileLog = true; // SV Ended is a file log
+              } break;
+case 'btn-log-another':
+              resetState(); break;
+      }
+  }
+ 
+  // --- NEW AUDIO TRIGGER LOGIC ---
+  if (isStageEnd) {
+      playAudioAlert('stage_done');
+}
+  if (isFileLog) {
+      // Delay playing file_logged so it doesn't overlap with stage_done if both trigger
+      setTimeout(() => playAudioAlert('file_logged'), 500);
+}
+  // --- END NEW AUDIO TRIGGER LOGIC ---
+ 
+  // Save state for crash recovery
+  if (id.includes('started') || id.includes('ended')) {
+      saveRecoveryData();
+}
+  updateButtonVisuals();
 }
 // === MODIFIED LOGGING (REMOVED OLD AUTO-LOG AUDIO CALL) ===
+/* SOURCE 248, 249, 250, 251, 252, 253, 254 */
 function logSubmission(){
 // Guard clause
 if ((STATE.fileType !== 'hp') && !STATE.svEndTime) return;
@@ -1613,22 +2051,23 @@ frEndedTimestamp: STATE.frEndedTimestamp,
 ...svData // Spread in the mode-specific data
 };
 STATE.loggedFiles.unshift(entry);
-// 🚀 BUG FIX: Sort all logs by date after adding
+//  BUG FIX: Sort all logs by date after adding
 STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp || 0));
 saveLogs();
 updateLogDisplay();
-updateDashboard(); // 🚀 Update dashboard
-populateFilterOptions(); // ⭐⭐⭐ UPDATE FILTERS
-clearRecoveryData(); // 🚀 Clear crash data
+updateDashboard(); //  Update dashboard
+populateFilterOptions(); //  UPDATE FILTERS
+clearRecoveryData(); //  Clear crash data
 showLogToast('File logged successfully!', true);
 // NOTE: playAudioAlert('file_logged') call removed here, it's now in handleButtonClick
 }
+/* SOURCE 255, 256, 257, 258 */
 function saveLogs(){ localStorage.setItem('fd-logged-files', JSON.stringify(STATE.loggedFiles)); }
 window.deleteLog = i => {
 // Determine the file name for the confirmation message
 const logEntry = STATE.loggedFiles[i];
 const fileName = logEntry ? logEntry.fileName || 'this file' : 'this file';
-// ⭐ FIX: Use a single standard browser confirmation ⭐
+//  FIX: Use a single standard browser confirmation 
 if (confirm(`WARNING: Are you sure you want to permanently delete the log entry for "${fileName}"? This action cannot be undone.`)) {
 STATE.loggedFiles.splice(i, 1);
 saveLogs();
@@ -1638,93 +2077,98 @@ populateFilterOptions();
 showLogToast('Log deleted.', false);
 }
 };
-// === ⭐⭐⭐ NEW: FUNCTION TO OPEN THE EDIT MODAL (FIXED) ⭐⭐⭐ ===
+// ===  NEW: FUNCTION TO OPEN THE EDIT MODAL (FIXED)  ===
+/* SOURCE 259, 260, 261, 262, 263, 264, 265, 266, 267, 268 */
 function openManualLogModal() {
-  STATE.editingLogIndex = null; // Ensure we are in "new" mode
-  // 1. Set titles and button
-  DOM.modalTitle.textContent = 'Manual File Log';
-  DOM.modalDescription.textContent = 'Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.';
-  DOM.modalSaveBtn.textContent = 'Save Log';
-  // 2. Clear and enable all fields
-  DOM.modalFileName.value = '';
-  DOM.modalFileType.innerHTML = `
+  STATE.editingLogIndex = null;
+// Ensure we are in "new" mode
+  // 1. Set titles and button
+  DOM.modalTitle.textContent = 'Manual File Log';
+DOM.modalDescription.textContent = 'Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.';
+DOM.modalSaveBtn.textContent = 'Save Log';
+  // 2. Clear and enable all fields
+  DOM.modalFileName.value = '';
+DOM.modalFileType.innerHTML = `
 <option value="live">Live File</option>
 <option value="batch">Batch File</option>
 <option value="hp">HP File</option>
 <option value="aiera">Aiera File</option>
 `;
-  DOM.modalFileType.value = 'live';
-  DOM.modalLogDate.value = new Date().toISOString().split('T')[0];
-  DOM.modalAudioLength.value = '00:00:00';
-  DOM.modalFrTime.value = '00:00:00';
-  DOM.modalSvTime.value = '00:00:00';
-  DOM.modalOverallTime.value = '00:00:00';
-  const allFields = [
-      DOM.modalFileName,
-      DOM.modalFileType,
-      DOM.modalLogDate,
-      DOM.modalAudioLength,
-      DOM.modalFrTime,
-      DOM.modalSvTime,
-      DOM.modalOverallTime
-  ];
-  allFields.forEach(field => field.disabled = false);
-  DOM.modalSvTime.disabled = false;
-  DOM.modalOverallTime.disabled = false;
-  // 3. Open Modal
-  DOM.modalOverlay.classList.add('open');
+  DOM.modalFileType.value = 'live';
+  DOM.modalLogDate.value = new Date().toISOString().split('T')[0];
+DOM.modalAudioLength.value = '00:00:00';
+  DOM.modalFrTime.value = '00:00:00';
+  DOM.modalSvTime.value = '00:00:00';
+  DOM.modalOverallTime.value = '00:00:00';
+const allFields = [
+      DOM.modalFileName,
+      DOM.modalFileType,
+      DOM.modalLogDate,
+      DOM.modalAudioLength,
+      DOM.modalFrTime,
+      DOM.modalSvTime,
+      DOM.modalOverallTime
+  ];
+allFields.forEach(field => field.disabled = false);
+  DOM.modalSvTime.disabled = false;
+  DOM.modalOverallTime.disabled = false;
+  // 3. Open Modal
+  DOM.modalOverlay.classList.add('open');
 }
 window.openEditModal = i => {
-  const log = STATE.loggedFiles[i];
-  if (!log) return;
-  STATE.editingLogIndex = i; // Set which log we're editing
-  // 1. Determine if it's a manual log
-  const isManualLog = log.frStartedTimestamp === null;
-  const isHp = log.fileType === 'hp';
-  const isAiera = log.fileType === 'aiera';
-  // 2. Set Modal Titles and Button
-  DOM.modalTitle.textContent = 'Edit Log Entry';
-  DOM.modalDescription.textContent = isManualLog
-      ? 'This is a manual log. All fields are editable.'
-      : 'This log was created by the timer. Only File Name and File Type can be changed.';
-  DOM.modalSaveBtn.textContent = 'Save Changes';
-  // 3. Populate Fields and set options
-  DOM.modalFileType.innerHTML = `
+  const log = STATE.loggedFiles[i];
+  if (!log) return;
+/* SOURCE 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281 */
+  STATE.editingLogIndex = i;
+// Set which log we're editing
+  // 1. Determine if it's a manual log
+  const isManualLog = log.frStartedTimestamp === null;
+const isHp = log.fileType === 'hp';
+  const isAiera = log.fileType === 'aiera';
+// 2. Set Modal Titles and Button
+  DOM.modalTitle.textContent = 'Edit Log Entry';
+  DOM.modalDescription.textContent = isManualLog
+      ? 'This is a manual log. All fields are editable.'
+      : 'This log was created by the timer. Only File Name and File Type can be changed.';
+  DOM.modalSaveBtn.textContent = 'Save Changes';
+// 3. Populate Fields and set options
+  DOM.modalFileType.innerHTML = `
 <option value="live">Live File</option>
 <option value="batch">Batch File</option>
 <option value="hp">HP File</option>
 <option value="aiera">Aiera File</option>
 `;
-  DOM.modalFileName.value = log.fileName;
-  DOM.modalFileType.value = log.fileType || 'live';
-  DOM.modalAudioLength.value = secondsToTime(log.audioLengthSeconds);
-  DOM.modalFrTime.value = log.frTime === 'N/A' ? '00:00:00' : log.frTime;
-  DOM.modalSvTime.value = log.svTime === 'N/A' ? '00:00:00' : log.svTime;
-  DOM.modalOverallTime.value = log.overallTime === 'N/A' ? '00:00:00' : log.overallTime;
-  // Format date for the input field (YYYY-MM-DD)
-  const logDate = new Date(log.logDateTimestamp);
-  DOM.modalLogDate.value = logDate.toISOString().split('T')[0];
-  // 4. Enable/Disable fields based on your rules
-  const fieldsToToggle = [
-      DOM.modalLogDate,
-      DOM.modalAudioLength,
-      DOM.modalFrTime,
-      DOM.modalSvTime,
-      DOM.modalOverallTime
-  ];
-  fieldsToToggle.forEach(field => {
-      field.disabled = !isManualLog;
-  });
-  // File type is always editable
-  DOM.modalFileType.disabled = false;
-  // Handle SV/Overall disable for HP/Aiera type (even if manual)
-  if (isHp || isAiera) {
-      DOM.modalSvTime.disabled = true;
-      DOM.modalOverallTime.disabled = true;
-  }
-  // 5. Open Modal
-  DOM.modalOverlay.classList.add('open');
+DOM.modalFileName.value = log.fileName;
+  DOM.modalFileType.value = log.fileType || 'live';
+  DOM.modalAudioLength.value = secondsToTime(log.audioLengthSeconds);
+  DOM.modalFrTime.value = log.frTime === 'N/A' ? '00:00:00' : log.frTime;
+DOM.modalSvTime.value = log.svTime === 'N/A' ? '00:00:00' : log.svTime;
+  DOM.modalOverallTime.value = log.overallTime === 'N/A' ? '00:00:00' : log.overallTime;
+// Format date for the input field (YYYY-MM-DD)
+  const logDate = new Date(log.logDateTimestamp);
+  DOM.modalLogDate.value = logDate.toISOString().split('T')[0];
+// 4. Enable/Disable fields based on your rules
+  const fieldsToToggle = [
+      DOM.modalLogDate,
+      DOM.modalAudioLength,
+      DOM.modalFrTime,
+      DOM.modalSvTime,
+      DOM.modalOverallTime
+  ];
+fieldsToToggle.forEach(field => {
+      field.disabled = !isManualLog;
+  });
+// File type is always editable
+  DOM.modalFileType.disabled = false;
+// Handle SV/Overall disable for HP/Aiera type (even if manual)
+  if (isHp || isAiera) {
+      DOM.modalSvTime.disabled = true;
+DOM.modalOverallTime.disabled = true;
+  }
+  // 5. Open Modal
+  DOM.modalOverlay.classList.add('open');
 }
+/* SOURCE 282, 283, 284, 285 */
 function clearAllLogs(){
 if (!STATE.loggedFiles.length) return;
 const modal = document.createElement('div');
@@ -1744,19 +2188,22 @@ modal.querySelector('#confirm-delete').onclick = () => {
 STATE.loggedFiles=[];
 saveLogs();
 updateLogDisplay();
-resetDashboard(); // 🚀 Reset dashboard
-populateFilterOptions(); // ⭐⭐⭐ UPDATE FILTERS
+updateDashboard(); //  Reset dashboard
+populateFilterOptions();
+//  UPDATE FILTERS
 modal.remove();
 showLogToast('All logs cleared.', false);
 };
 }
-// === ⭐⭐⭐ UPGRADED: DUAL-PURPOSE SAVE FUNCTION (FIXED AIERA VALIDATION) ⭐⭐⭐ ===
+// ===  UPGRADED: DUAL-PURPOSE SAVE FUNCTION (FIXED AIERA VALIDATION)  ===
+/* SOURCE 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311 */
 function handleLogModalSave() {
 DOM.modalError.classList.add('hidden');
 // 1. Get all values from modal
 const fileName = DOM.modalFileName.value.trim();
 const fileType = DOM.modalFileType.value;
-const logDate = DOM.modalLogDate.value; // YYYY-MM-DD
+const logDate = DOM.modalLogDate.value;
+// YYYY-MM-DD
 const audioLengthStr = DOM.modalAudioLength.value;
 const frTimeStr = DOM.modalFrTime.value;
 const svTimeStr = DOM.modalSvTime.value;
@@ -1786,7 +2233,7 @@ const svTimeSec = isHp ? 0 : timeToSeconds(svTimeStr);
 const overallTimeSec = isHp ? frTimeSec : timeToSeconds(overallTimeStr);
 // 4. Calculate Targets
 let frTargetSec, svTargetSec, overallTargetSec;
-// ⭐⭐⭐ UPDATED TARGET LOGIC IN MODAL ⭐⭐⭐
+//  UPDATED TARGET LOGIC IN MODAL 
 if (isHp) {
 frTargetSec = 5400;
 svTargetSec = 0;
@@ -1794,7 +2241,8 @@ overallTargetSec = 5400;
 } else if (fileType === 'aiera') {
 frTargetSec = Math.round(audioLengthSeconds * 0.5);
 svTargetSec = Math.round(audioLengthSeconds * 3.0); // 3.0x for Aiera SV
-overallTargetSec = Math.round(audioLengthSeconds * 3.5); // 3.5x Total
+overallTargetSec = Math.round(audioLengthSeconds * 3.5);
+// 3.5x Total
 } else {
 frTargetSec = Math.round(audioLengthSeconds * 0.5);
 svTargetSec = Math.round(audioLengthSeconds * 1.5);
@@ -1874,7 +2322,8 @@ updateDashboard();
 populateFilterOptions();
 closeModal();
 }
-// === ⭐⭐⭐ REBUILT LOG DISPLAY (WITH FILTERING AND DYNAMIC SUMMARY FIXED) ⭐⭐⭐ ===
+// ===  REBUILT LOG DISPLAY (WITH FILTERING AND DYNAMIC SUMMARY FIXED)  ===
+/* SOURCE 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331 */
 function updateLogDisplay(){
 // 1. Filter logs based on STATE
 const logsToDisplay = STATE.loggedFiles
@@ -1883,10 +2332,10 @@ const logsToDisplay = STATE.loggedFiles
 const ts = item.log.logDateTimestamp || item.log.frStartedTimestamp;
 if (!ts) return false; // Don't show logs without a date
 const d = new Date(ts);
-// ⭐ NEW: Get Date Range values
+//  NEW: Get Date Range values
 const startDate = DOM.dateRangeStart.value;
 const endDate = DOM.dateRangeEnd.value;
-// ⭐ NEW: Custom Date Range Filter (takes priority)
+//  NEW: Custom Date Range Filter (takes priority)
 if (startDate && endDate) {
 const startTime = new Date(startDate + 'T00:00:00').getTime();
 const endTime = new Date(endDate + 'T23:59:59').getTime();
@@ -1986,7 +2435,7 @@ const fileType = (l.fileType || 'live').toUpperCase();
 // Custom display for N/A or 00:00:00
 const formatTimeDisplay = (time, onTime) => {
 if (time === '00:00:00') return '<span class="text-sm text-gray-500 font-medium">N/A</span>';
-return `<div class="font-bold ${onTime?'text-green-600':'text-red-600'}">${onTime?' ✅ ':' ⚠️ '} ${time}</div>`;
+return `<div class="font-bold ${onTime?'text-green-600':'text-red-600'}">${onTime?'  ':'  '} ${time}</div>`;
 };
 const formatTimestampDisplay = (ts) => ts ? formatTimestamp(ts) : 'N/A';
 // FR Display
@@ -2035,10 +2484,12 @@ DOM.logDisplay.innerHTML = finalHtml;
 lucide.createIcons();
 }
 // === MODIFIED RESET STATE ===
+/* SOURCE 332, 333, 334, 335, 336, 337 */
 function resetState(){
 stopMainTimer();
 clearRecoveryData();
-localStorage.removeItem('audio_unlocked'); // Reset audio flag on reset
+localStorage.removeItem('audio_unlocked');
+// Reset audio flag on reset
 STATE.frStartTime = STATE.frEndTime = STATE.svStartTime = STATE.svEndTime = null;
 STATE.frStartedTimestamp = STATE.frEndedTimestamp = STATE.svStartedTimestamp = STATE.svEndedTimestamp = null;
 STATE.currentStopwatchSeconds = {fr:0,sv:0,overall:0};
@@ -2058,6 +2509,7 @@ DOM.hpFrTarget.textContent = `Target: ${secondsToTime(hpTargetSeconds)}`;
 }
 }
 // === AUDIO INPUT ===
+/* SOURCE 338, 339, 340 */
 function handleAudioInput(e,force=false){
 // Don't run this logic if we are in HP mode
 // (HP mode doesn't use audio length for targets)
@@ -2072,7 +2524,8 @@ const val = DOM.audioInput.value.trim();
 const valid = val.match(/^\d{2}:\d{2}:\d{2}$/);
 const sec = valid ? timeToSeconds(val) : 0;
 if (valid||force){ DOM.audioError.classList.add('hidden'); updateTargets(sec); }
-else { DOM.audioError.classList.remove('hidden'); updateTargets(0); }
+else { DOM.audioError.classList.remove('hidden'); updateTargets(0);
+}
 }
 // === TOGGLE VIEW ===
 DOM.toggleCountdown.addEventListener('click',()=>{
@@ -2088,22 +2541,26 @@ DOM.toggleCountdown.classList.remove('active');
 updateDisplay();
 });
 // === NOTES, EXPORT, INIT ===
+/* SOURCE 341 */
 function showMessage(txt,err=false){
 DOM.messageText.textContent=txt;
 DOM.messageBox.className=`p-2 ${err?'bg-red-100 border border-red-400 text-red-700':'bg-green-100 border border-green-400 text-green-700'} rounded-lg mb-2`;
 DOM.messageBox.classList.remove('hidden');
 setTimeout(()=>DOM.messageBox.classList.add('hidden'),3000);
 }
-// ⭐⭐⭐ NEW SPEAKER MESSAGE FUNCTION ⭐⭐⭐
+//  NEW SPEAKER MESSAGE FUNCTION 
+/* SOURCE 342, 343 */
 function showSpeakerMessage(txt,err=false){
 DOM.speakerMessageText.textContent=txt;
 DOM.speakerMessageBox.className=`p-2 ${err?'bg-red-100 border border-red-400 text-red-700':'bg-green-100 border border-green-400 text-green-700'} rounded-lg mb-2`;
 DOM.speakerMessageBox.style.display = 'block'; // Use display instead of hidden class
-DOM.speakerMessageBox.classList.remove('hidden'); // Remove just in case
+DOM.speakerMessageBox.classList.remove('hidden');
+// Remove just in case
 setTimeout(()=> {
 DOM.speakerMessageBox.style.display = 'none';
 }, 3000);
 }
+/* SOURCE 344, 345, 346, 347, 348 */
 function updateNotesButtons(){ DOM.undoBtn.disabled=NOTES_STATE.historyIndex===0; DOM.redoBtn.disabled=NOTES_STATE.historyIndex===NOTES_STATE.history.length-1; }
 function saveNotesState(){
 if (DOM.notesArea.value===NOTES_STATE.history[NOTES_STATE.historyIndex]) return;
@@ -2118,16 +2575,18 @@ function initNotes(){
 const saved = localStorage.getItem('fd-notes');
 if (saved!==null){ DOM.notesArea.value=saved; NOTES_STATE.history=[saved]; NOTES_STATE.historyIndex=0; }
 DOM.notesArea.addEventListener('input',()=>{ if(!NOTES_STATE.isTyping){ NOTES_STATE.isTyping=true; setTimeout(()=>{saveNotesState();NOTES_STATE.isTyping=false;},500); }});
-DOM.undoBtn.onclick=()=>{ if(NOTES_STATE.historyIndex>0){ NOTES_STATE.historyIndex--; DOM.notesArea.value=NOTES_STATE.history[NOTES_STATE.historyIndex]; localStorage.setItem('fd-notes',DOM.notesArea.value); updateNotesButtons(); }};
+DOM.undoBtn.onclick=()=>{ if(NOTES_STATE.historyIndex>0){ NOTES_STATE.historyIndex--; DOM.notesArea.value=NOTES_STATE.history[NOTES_STATE.historyIndex]; localStorage.setItem('fd-notes',DOM.notesArea.value);
+updateNotesButtons(); }};
 DOM.redoBtn.onclick=()=>{ if(NOTES_STATE.historyIndex<NOTES_STATE.history.length-1){ NOTES_STATE.historyIndex++; DOM.notesArea.value=NOTES_STATE.history[NOTES_STATE.historyIndex]; localStorage.setItem('fd-notes',DOM.notesArea.value); updateNotesButtons(); }};
 DOM.clearBtn.onclick=()=>{ if(DOM.notesArea.value.trim()){ DOM.notesArea.value=''; saveNotesState(); showMessage('Notepad cleared.',false); } else showMessage('Already empty.',true); };
 DOM.copyBtn.onclick=()=>{ if(DOM.notesArea.value){ DOM.notesArea.select(); document.execCommand('copy'); showMessage('Copied!',false); } else showMessage('Nothing to copy.',true); };
 }
-// === 🚀 SPEAKER DB FUNCTIONS ===
+// ===  SPEAKER DB FUNCTIONS ===
+/* SOURCE 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373 */
 function saveSpeakers() {
 localStorage.setItem('fd-speakers', JSON.stringify(STATE.speakers));
 }
-// 🚀 UPDATED RENDER FUNCTION
+//  UPDATED RENDER FUNCTION
 function renderSpeakers(filter = '') {
 const lowerFilter = filter.toLowerCase();
 let speakersToShow;
@@ -2146,8 +2605,7 @@ const s = previewCount === 1 ? '' : 's';
 const totalSpeakers = STATE.speakers.length;
 const totalS = totalSpeakers === 1 ? 'speaker' : 'speakers';
 const previewS = previewCount === 1 ? 'speaker' : 'speakers';
-message = `<p class="text-sm text-gray-500 text-center italic mt-2 mb-2">Showing a preview of ${previewCount} ${previewS}. You have ${totalSpeakers} ${totalS} logged.
-Start typing to search...</p>`;
+message = `<p class="text-sm text-gray-500 text-center italic mt-2 mb-2">Showing a preview of ${previewCount} ${previewS}. You have ${totalSpeakers} ${totalS} logged. Start typing to search...</p>`;
 } else {
 // USER IS SEARCHING - Show filtered results
 speakersToShow = STATE.speakers.filter(s => s.toLowerCase().includes(lowerFilter));
@@ -2177,7 +2635,7 @@ return `
 </div>
 </div>
 `;
- 
+ 
 }).join('');
 DOM.speakerList.innerHTML = message + listHtml; // Prepend the message
 lucide.createIcons();
@@ -2190,7 +2648,7 @@ showSpeakerMessage('Speaker copied to clipboard!', false);
 showSpeakerMessage('Failed to copy.', true);
 });
 }
-// 🚀 NEW EDIT SPEAKER FUNCTION
+//  NEW EDIT SPEAKER FUNCTION
 window.editSpeaker = (index) => {
 const oldSpeaker = STATE.speakers[index];
 const newSpeaker = prompt('Edit speaker name:', oldSpeaker);
@@ -2212,7 +2670,7 @@ showSpeakerMessage('Speaker deleted.', false);
 }
 function exportSpeakers() {
 if (STATE.speakers.length === 0) {
-showSpeakerMessage('No speakers to export.', true);
+showLogToast('No speakers to export.', false);
 return;
 }
 const data = JSON.stringify(STATE.speakers, null, 2);
@@ -2251,7 +2709,8 @@ DOM.speakerImportInput.value = '';
 };
 reader.readAsText(file);
 }
-// === 🚀 DASHBOARD FUNCTIONS ===
+// ===  DASHBOARD FUNCTIONS ===
+/* SOURCE 374, 375, 376, 377, 378 */
 function setOnTimeColor(element, percent) {
 element.classList.remove('ontime-ok', 'ontime-warn', 'ontime-bad');
 if (percent >= 95) {
@@ -2276,11 +2735,16 @@ DOM.statOntimeSv.textContent = 'N/A';
 DOM.statOntimeOverall.textContent = 'N/A';
 DOM.statDetailsFr.innerHTML = ''; // Clear details
 DOM.statDetailsSv.innerHTML = ''; // Clear details
-DOM.statDetailsOverall.innerHTML = ''; // Clear details
+DOM.statDetailsOverall.innerHTML = '';
+// Clear details
 setOnTimeColor(DOM.statOntimeFr, 100);
 setOnTimeColor(DOM.statOntimeSv, 100);
 setOnTimeColor(DOM.statOntimeOverall, 100);
+//  NEW: Clear chart on reset
+if (DOM.currentChartInstance) { DOM.currentChartInstance.destroy();
+DOM.currentChartInstance = null; }
 }
+/* SOURCE 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404 */
 function updateDashboard() {
 const logs = STATE.loggedFiles;
 if (logs.length === 0) {
@@ -2289,7 +2753,7 @@ return;
 }
 const totalFiles = logs.length;
 const totalAH = logs.reduce((s,l)=>s+parseFloat(l.audioHours),0).toFixed(2);
-// ⭐ --- START OF NEW CODE BLOCK --- ⭐
+//  --- START OF NEW CODE BLOCK --- 
 // 1. Create counters for all types and statuses
 const tatCounts = {
 fr: { within: { live: 0, batch: 0, hp: 0, aiera: 0 }, exceeded: { live: 0, batch: 0, hp: 0, aiera: 0 } },
@@ -2322,10 +2786,10 @@ tatCounts.sv.exceeded[type]++;
 });
 // 3. Helper function to build the HTML for FR and Overall
 const buildDetailsHtml = (counts) => {
-// ⭐ Calculate totals first
+//  Calculate totals first
 const totalWithin = counts.within.live + counts.within.batch + counts.within.hp + counts.within.aiera;
 const totalExceeded = counts.exceeded.live + counts.exceeded.batch + counts.exceeded.hp + counts.exceeded.aiera;
-// ⭐ Determine "File" or "Files"
+//  Determine "File" or "Files"
 const withinLabel = totalWithin === 1 ? 'File' : 'Files';
 const exceededLabel = totalExceeded === 1 ? 'File' : 'Files';
 return `
@@ -2347,10 +2811,10 @@ ${totalExceeded} ${exceededLabel} Exceed TAT:
 };
 // 4. Helper function for SV (which excludes HP)
 const buildSvDetailsHtml = (counts) => {
-// ⭐ Calculate totals first
+//  Calculate totals first
 const totalWithin = counts.within.live + counts.within.batch + counts.within.aiera;
 const totalExceeded = counts.exceeded.live + counts.exceeded.batch + counts.exceeded.aiera;
-// ⭐ Determine "File" or "Files"
+//  Determine "File" or "Files"
 const withinLabel = totalWithin === 1 ? 'File' : 'Files';
 const exceededLabel = totalExceeded === 1 ? 'File' : 'Files';
 return `
@@ -2372,23 +2836,23 @@ ${totalExceeded} ${exceededLabel} Exceed TAT:
 DOM.statDetailsFr.innerHTML = buildDetailsHtml(tatCounts.fr);
 DOM.statDetailsOverall.innerHTML = buildDetailsHtml(tatCounts.overall);
 DOM.statDetailsSv.innerHTML = buildSvDetailsHtml(tatCounts.sv);
-// ⭐ --- END OF NEW CODE BLOCK --- ⭐
-// ⭐⭐⭐ START: EDITED DASHBOARD LOGIC ⭐⭐⭐
-const counts = { live: 0, batch: 0, hp: 0, aiera: 0 };
+//  --- END OF NEW CODE BLOCK --- 
+//  START: EDITED DASHBOARD LOGIC 
+const fileTypeCounts = { live: 0, batch: 0, hp: 0, aiera: 0 };
 logs.forEach(l => {
 const type = l.fileType || 'live'; // Default old logs to 'live'
-if (counts[type] !== undefined) {
-counts[type]++;
+if (fileTypeCounts[type] !== undefined) {
+fileTypeCounts[type]++;
 }
 });
 // Use innerHTML to add color spans
 DOM.statFileTypes.innerHTML = `
-<span class="file-type-live">LIVE: ${counts.live}</span> |
-<span class="file-type-batch">BATCH: ${counts.batch}</span> |
-<span class="file-type-hp">HP: ${counts.hp}</span> |
-<span class="file-type-aiera">AIERA: ${counts.aiera}</span>
+<span class="file-type-live">LIVE: ${fileTypeCounts.live}</span> |
+<span class="file-type-batch">BATCH: ${fileTypeCounts.batch}</span> |
+<span class="file-type-hp">HP: ${fileTypeCounts.hp}</span> |
+<span class="file-type-aiera">AIERA: ${fileTypeCounts.aiera}</span>
 `;
-// ⭐⭐⭐ END: EDITED DASHBOARD LOGIC ⭐⭐⭐
+//  END: EDITED DASHBOARD LOGIC 
 const onTimeFR = logs.filter(l => l.frOnTime).length;
 const onTimeOverall = logs.filter(l => l.overallOnTime).length;
 // For SV, we must ignore HP files
@@ -2397,8 +2861,8 @@ const nonHpFilesCount = nonHpLogs.length;
 const onTimeSV = nonHpLogs.filter(l => l.svOnTime).length;
 DOM.statTotalFiles.textContent = totalFiles;
 DOM.statTotalAh.textContent = totalAH;
-// ⭐⭐⭐ REMOVED Avg.
-// FR Time logic line ⭐⭐⭐
+//  REMOVED Avg.
+// FR Time logic line 
 const frPercent = Math.round((onTimeFR / totalFiles) * 100);
 DOM.statOntimeFr.textContent = `${frPercent}%`;
 setOnTimeColor(DOM.statOntimeFr, frPercent);
@@ -2413,10 +2877,15 @@ setOnTimeColor(DOM.statOntimeSv, svPercent);
 DOM.statOntimeSv.textContent = 'N/A';
 setOnTimeColor(DOM.statOntimeSv, 100); // Default to 'ok' color
 }
+
+// Re-render chart based on current selection or default
+const currentMetric = DOM.tatChartType ? DOM.tatChartType.value : 'overall';
+renderCumulativeChart(currentMetric);
 }
-// === 🚀 LOG IMPORT/EXPORT FUNCTIONS (FIXED) ===
+// ===  LOG IMPORT/EXPORT FUNCTIONS (FIXED) ===
+/* SOURCE 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415 */
 function exportLogs() {
-if (STATE.loggedFiles.length === 0) {
+if (!STATE.loggedFiles.length) {
 showLogToast('No logs to export.', false);
 return;
 }
@@ -2458,7 +2927,7 @@ STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp
 saveLogs();
 updateLogDisplay();
 updateDashboard();
-populateFilterOptions(); // ⭐⭐⭐ UPDATE FILTERS
+populateFilterOptions(); //  UPDATE FILTERS
 showLogToast(`${importCount} new log(s) imported successfully!`, true);
 } else {
 showLogToast('Invalid file format. Must be a JSON array.', true);
@@ -2472,7 +2941,8 @@ DOM.logImportInput.value = '';
 };
 reader.readAsText(file);
 }
-// === 🚀 MIGRATION FUNCTION ===
+// ===  MIGRATION FUNCTION ===
+/* SOURCE 416, 417 */
 function runLogMigration() {
 let needsSave = false;
 STATE.loggedFiles.forEach(log => {
@@ -2492,7 +2962,8 @@ console.log("Migrating old logs...");
 saveLogs();
 }
 }
-// === ⭐⭐⭐ NEW FILTER FUNCTIONS (FIXED) ⭐⭐⭐ ===
+// ===  NEW FILTER FUNCTIONS (FIXED)  ===
+/* SOURCE 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428 */
 function populateFilterOptions() {
 const uniqueYears = new Set();
 const uniqueMonths = new Set();
@@ -2523,43 +2994,57 @@ DOM.filterYearSelect.value = STATE.filterYear;
 DOM.filterMonthSelect.value = STATE.filterMonth;
 }
 function handleFilterChange() {
+// Determine if a Date Range is active
+const isDateRangeActive = DOM.dateRangeStart.value || DOM.dateRangeEnd.value;
+if (isDateRangeActive) {
 // Clear Year/Month selection if Date Range is used
-if (DOM.dateRangeStart.value || DOM.dateRangeEnd.value) {
 STATE.filterYear = 'all';
 STATE.filterMonth = 'all';
 DOM.filterYearSelect.value = 'all';
 DOM.filterMonthSelect.value = 'all';
 } else {
+// Clear Date Range inputs if Year/Month selectors are used
+if (DOM.filterYearSelect.value !== 'all' || DOM.filterMonthSelect.value !== 'all') {
+    DOM.dateRangeStart.value = '';
+DOM.dateRangeEnd.value = '';
+}
+// Apply Year/Month selection
 STATE.filterYear = DOM.filterYearSelect.value;
 STATE.filterMonth = DOM.filterMonthSelect.value;
 }
-updateLogDisplay(); // Re-render the log display with the filter
+updateLogDisplay();
+// Re-render the log display with the filter
+updateDashboard(); // Re-render dashboard/chart with the new filter
 }
 function clearFilters() {
 STATE.filterYear = 'all';
 STATE.filterMonth = 'all';
 DOM.filterYearSelect.value = 'all';
 DOM.filterMonthSelect.value = 'all';
-// ⭐ NEW: Clear Date Range Inputs
+//  NEW: Clear Date Range Inputs
 DOM.dateRangeStart.value = '';
 DOM.dateRangeEnd.value = '';
 updateLogDisplay();
+updateDashboard(); // Update dashboard/chart with clear filter
 }
 /* ==============================
 FINAL CSV EXPORT: Variance in HH:MM:SS + LOCAL TIME FILENAME
 ============================== */
 // === MODIFIED CSV EXPORT ===
+/* SOURCE 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440 */
 DOM.exportCSVBtn.onclick = () => {
 if (!STATE.loggedFiles.length) {
 showLogToast('No logs to export.', false);
 return;
 }
-// 🚀 NEW formatVariance function
+//  NEW formatVariance function
 // Returns "00:10:00" if on-time, "-00:05:00" if overdue
 const formatVariance = (actualSec, targetSec) => {
-const diff = targetSec - actualSec; // This is "time left"
+const diff = targetSec - actualSec;
+// This is "time left"
 const abs = Math.abs(diff);
-const sign = diff < 0 ? '-' : ''; // Only add sign if overdue
+const sign = diff < 0 ? '-' : '';
+// Only add sign if overdue
 const h = Math.floor(abs / 3600);
 const m = Math.floor((abs % 3600) / 60);
 const s = abs % 60;
@@ -2619,48 +3104,233 @@ document.body.removeChild(a);
 URL.revokeObjectURL(url);
 };
 DOM.clearAllLogsBtn.onclick = clearAllLogs;
-// === ⭐⭐⭐ NEW: MODAL OPEN/CLOSE HANDLERS ⭐⭐⭐ ===
+// ===  NEW: MODAL OPEN/CLOSE HANDLERS  ===
+/* SOURCE 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451 */
 function openManualLogModal() {
-  STATE.editingLogIndex = null; // Ensure we are in "new" mode
-  // 1. Set titles and button
-  DOM.modalTitle.textContent = 'Manual File Log';
-  DOM.modalDescription.textContent = 'Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.';
-  DOM.modalSaveBtn.textContent = 'Save Log';
-  // 2. Clear and enable all fields
-  DOM.modalFileName.value = '';
-  DOM.modalFileType.innerHTML = `
+  STATE.editingLogIndex = null;
+// Ensure we are in "new" mode
+  // 1. Set titles and button
+  DOM.modalTitle.textContent = 'Manual File Log';
+DOM.modalDescription.textContent = 'Log a file you completed without using the timer. Timestamps will be marked N/A, but all TATs will be calculated. You may also leave Time Taken at 00:00:00 if you have no TAT data for previous files.';
+DOM.modalSaveBtn.textContent = 'Save Log';
+  // 2. Clear and enable all fields
+  DOM.modalFileName.value = '';
+DOM.modalFileType.innerHTML = `
 <option value="live">Live File</option>
 <option value="batch">Batch File</option>
 <option value="hp">HP File</option>
 <option value="aiera">Aiera File</option>
 `;
-  DOM.modalFileType.value = 'live';
-  DOM.modalLogDate.value = new Date().toISOString().split('T')[0];
-  DOM.modalAudioLength.value = '00:00:00';
-  DOM.modalFrTime.value = '00:00:00';
-  DOM.modalSvTime.value = '00:00:00';
-  DOM.modalOverallTime.value = '00:00:00';
-  const allFields = [
-      DOM.modalFileName,
-      DOM.modalFileType,
-      DOM.modalLogDate,
-      DOM.modalAudioLength,
-      DOM.modalFrTime,
-      DOM.modalSvTime,
-      DOM.modalOverallTime
-  ];
-  allFields.forEach(field => field.disabled = false);
-  DOM.modalSvTime.disabled = false;
-  DOM.modalOverallTime.disabled = false;
-  // 3. Open Modal
-  DOM.modalOverlay.classList.add('open');
+  DOM.modalFileType.value = 'live';
+  DOM.modalLogDate.value = new Date().toISOString().split('T')[0];
+DOM.modalAudioLength.value = '00:00:00';
+  DOM.modalFrTime.value = '00:00:00';
+  DOM.modalSvTime.value = '00:00:00';
+  DOM.modalOverallTime.value = '00:00:00';
+const allFields = [
+      DOM.modalFileName,
+      DOM.modalFileType,
+      DOM.modalLogDate,
+      DOM.modalAudioLength,
+      DOM.modalFrTime,
+      DOM.modalSvTime,
+      DOM.modalOverallTime
+  ];
+allFields.forEach(field => field.disabled = false);
+  DOM.modalSvTime.disabled = false;
+  DOM.modalOverallTime.disabled = false;
+  // 3. Open Modal
+  DOM.modalOverlay.classList.add('open');
 }
 function closeModal() {
 STATE.editingLogIndex = null; // Reset editing state
 DOM.modalOverlay.classList.remove('open');
 DOM.modalError.classList.add('hidden');
 }
-// === 🚀 MODIFIED INIT (FIXED LISTENERS) ===
+// ===  PERFORMANCE ANALYSIS FUNCTIONS (WATR BAR CHART) ===
+
+// Helper to get filtered logs (mirrors logic in updateLogDisplay)
+/* SOURCE 452, 453, 454, 455, 456, 457, 458, 459, 460, 461 */
+function getFilteredLogsForChart() {
+    return STATE.loggedFiles.filter(log => {
+        const ts = log.logDateTimestamp || log.frStartedTimestamp;
+        if (!ts) return false;
+        const d = new Date(ts);
+
+        // Date Range Filter (if set)
+        const startDate = DOM.dateRangeStart.value;
+        const endDate = DOM.dateRangeEnd.value;
+        if (startDate && endDate) {
+            const startTime = new Date(startDate + 'T00:00:00').getTime();
+            const endTime = new Date(endDate + 'T23:59:59').getTime();
+            return ts >= startTime && ts <= endTime;
+        }
+
+        // Year/Month Filter (if set)
+        const logYear = d.getFullYear().toString();
+        const logMonth = d.toLocaleString('en-US', { month: 'long' });
+        const yearMatch = (STATE.filterYear === 'all') || (logYear === STATE.filterYear);
+        const monthMatch = (STATE.filterMonth === 'all') || (logMonth === STATE.filterMonth);
+        return yearMatch && monthMatch;
+    }).filter(log => log.frTimeSec > 0 && log.audioLengthSeconds > 0);
+// Only include completed logs with data
+}
+
+
+function generateWatrData(metricType) {
+    // Get the filtered and completed logs
+    const filteredAndCompletedLogs = getFilteredLogsForChart();
+// Reverse and slice the logs to get the last 20 (most recent)
+    // We reverse first so logs.slice(0, 20) gets the most recent 20
+    const logsToChart = filteredAndCompletedLogs.slice().slice(0, 20).reverse();
+const chartData = [];
+
+    logsToChart.forEach((log) => {
+        let actualSec, targetWatr;
+        const audioSec = log.audioLengthSeconds;
+        const isHP = log.fileType === 'hp';
+        
+        // Truncate file name for display
+        const fileNamePart = log.fileName.substring(0, 15);
+        const datePart = new Date(log.logDateTimestamp || log.frStartedTimestamp).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric'});
+        const fileLabel = `${fileNamePart}... (${datePart})`;
+
+        if (metricType === 'fr') {
+            actualSec = log.frTimeSec;
+            targetWatr = isHP ? (5400 / audioSec) : 0.5; // HP Target is 1.5h/AudioSec
+        } else if (metricType === 'sv') {
+            if (isHP || log.svTimeSec === 0) return;
+            actualSec = log.svTimeSec;
+            targetWatr = log.fileType === 'aiera' ? 3.0 : 1.5;
+        } else { // overall
+            actualSec = log.overallTimeSec;
+            // Target depends on file type and is calculated dynamically for HP
+            targetWatr = log.fileType === 'aiera' ? 3.5 : (isHP ? (5400 / audioSec) : 2.0);
+        }
+
+        const actualWatr = actualSec / audioSec;
+// Use color to indicate if the bar is compliant (green) or exceeded (red)
+        const barColor = actualWatr <= targetWatr ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'; // Green or Red
+        
+        chartData.push({
+            label: fileLabel,
+            actualWatr: actualWatr,
+            targetWatr: targetWatr,
+            barColor: barColor
+        });
+}
+);
+
+    return chartData;
+}
+
+
+function renderCumulativeChart(metricType) {
+    const watrData = generateWatrData(metricType);
+    
+    /* SOURCE 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482 */
+    if (DOM.currentChartInstance) {
+        DOM.currentChartInstance.destroy();
+    }
+    
+    if (watrData.length === 0) {
+        // Find the canvas parent element to write the message
+        const chartContainer = DOM.cumulativeTatChart.parentElement;
+if (chartContainer) {
+            // Restore the canvas container if it was replaced
+             if (chartContainer.querySelector('canvas')) { DOM.cumulativeTatChart.remove();
+}
+            
+            chartContainer.style.height = '100px';
+// Set a small height for the message
+            chartContainer.innerHTML = '<p class="text-center text-gray-500 mt-4">No completed files to calculate TAT Trend Analysis for the selected filter.</p>';
+}
+        return;
+    }
+    
+    // Restore the canvas if it was replaced by a message
+    const chartContainer = DOM.cumulativeTatChart.parentElement;
+if (!chartContainer.querySelector('canvas')) {
+        chartContainer.innerHTML = '<canvas id="cumulativeTatChart" width="800" height="400"></canvas>';
+// Re-get the canvas element reference if it was destroyed and recreated
+        DOM.cumulativeTatChart = document.getElementById('cumulativeTatChart');
+}
+    
+    // Dynamic height for horizontal chart: 25px per file + 100px for padding
+    chartContainer.style.height = `${watrData.length * 25 + 100}px`;
+const labels = watrData.map(d => d.label);
+    const actualData = watrData.map(d => d.actualWatr);
+    const targetData = watrData.map(d => d.targetWatr);
+const barColors = watrData.map(d => d.barColor);
+
+    // Dynamic Title
+    let titleText = `${metricType.toUpperCase()} TAT Trend Analysis - Showing ${watrData.length} Files`;
+if (metricType === 'fr') { titleText += ` (Target: ~0.5)` }
+    else if (metricType === 'overall') { titleText += ` (Target: ~2.0)` }
+
+    const ctx = DOM.cumulativeTatChart.getContext('2d');
+DOM.currentChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Target WATR',
+                    data: targetData,
+                    type: 'line', // Target is a horizontal line
+                    borderColor: 'rgb(59, 130, 246)', // Solid Blue
+                    borderWidth: 3, // Thicker line
+                    fill: false,
+                    pointRadius: 0, // No circles on the line
+                    tension: 0,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Actual WATR',
+                    data: actualData,
+                    backgroundColor: barColors,
+                    borderColor: barColors,
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Horizontal bars for readability
+            scales: {
+                y: {
+                    title: { display: true, text: 'File Name (Oldest to Newest)' }
+                },
+                x: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Audio Hours' }
+                }
+            },
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: titleText, font: { size: 16, weight: 'bold' } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+}
+                            const watr = context.parsed.x;
+const target = context.chart.data.datasets[0].data[context.dataIndex];
+                            const status = watr <= target ? ' WITHIN TAT' : ' EXCEEDED TAT';
+return `${label} ${watr.toFixed(2)} (${status})`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+// ===  MODIFIED INIT (FIXED LISTENERS) ===
+/* SOURCE 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505 */
 window.onload = () => {
 updateLiveClock(); STATE.clockIntervalId = setInterval(updateLiveClock, 1000);
 // --- Load Logs ---
@@ -2668,16 +3338,19 @@ const savedLogs = localStorage.getItem('fd-logged-files');
 if (savedLogs) {
 try {
 STATE.loggedFiles = JSON.parse(savedLogs);
-runLogMigration(); // 🚀 Run migration to fix old logs
+runLogMigration();
+//  Run migration to fix old logs
 STATE.loggedFiles.sort((a, b) => (b.logDateTimestamp || 0) - (a.logDateTimestamp || 0));
-populateFilterOptions(); // ⭐⭐⭐ POPULATE FILTERS ON LOAD
+populateFilterOptions();
+//  POPULATE FILTERS ON LOAD
 updateLogDisplay();
-updateDashboard(); // 🚀 Update dashboard on load
+updateDashboard(); //  Update dashboard on load
 } catch (e) { console.error(e); }
 } else {
-populateFilterOptions(); // ⭐⭐⭐ Must call even if no logs, to show "All"
+populateFilterOptions();
+//  Must call even if no logs, to show "All"
 }
-// --- 🚀 Load Speakers ---
+// ---  Load Speakers ---
 const savedSpeakers = localStorage.getItem('fd-speakers');
 if (savedSpeakers) {
 try {
@@ -2688,7 +3361,7 @@ renderSpeakers();
 } else {
 renderSpeakers();
 }
-// --- 🚀 Load Crash Recovery Data ---
+// ---  Load Crash Recovery Data ---
 const recoveryData = localStorage.getItem('fd-timer-recovery-data');
 if (recoveryData) {
 try {
@@ -2702,7 +3375,8 @@ DOM.fileType.value = STATE.fileType;
 DOM.fileNameInput.value = STATE.fileName;
 DOM.audioInput.value = secondsToTime(STATE.audioLengthSeconds);
 toggleMode(STATE.fileType); // Set the UI to the correct mode
-startMainTimer(); // This calls updateDisplay()
+startMainTimer();
+// This calls updateDisplay()
 showLogToast('Timer restored from previous session!', true);
 } catch(e) {
 console.error("Failed to restore timer:", e);
@@ -2723,7 +3397,7 @@ if(b) b.addEventListener('click', handleButtonClick)
 DOM.fileType.addEventListener('change', (e) => {
 resetState(); // Reset everything when mode changes
 });
-// === 🚀 ADD MODAL LISTENERS (FIXED) ===
+// ===  ADD MODAL LISTENERS (FIXED) ===
 DOM.manualLogBtn.addEventListener('click', openManualLogModal);
 DOM.modalCancelBtn.addEventListener('click', closeModal);
 DOM.modalOverlay.addEventListener('click', (e) => {
@@ -2760,7 +3434,7 @@ if (isHpOrAiera && DOM.modalOverallTime.disabled === false) {
 DOM.modalOverallTime.value = e.target.value;
 }
 });
-// === 🚀 ADD SPEAKER DB LISTENERS (FIXED) ===
+// ===  ADD SPEAKER DB LISTENERS (FIXED) ===
 DOM.addSpeakerBtn.addEventListener('click', () => {
 const newSpeaker = prompt('Enter the full speaker name and title:', 'Speaker Name [Title] (Company)');
 if (newSpeaker && newSpeaker.trim() !== '') {
@@ -2777,27 +3451,33 @@ renderSpeakers(e.target.value);
 DOM.exportSpeakerBtn.addEventListener('click', exportSpeakers);
 DOM.importSpeakerBtn.addEventListener('click', () => DOM.speakerImportInput.click());
 DOM.speakerImportInput.addEventListener('change', importSpeakers);
-// === 🚀 ADD LOG IMPORT/EXPORT LISTENERS (FIXED) ===
+// ===  ADD LOG IMPORT/EXPORT LISTENERS (FIXED) ===
 DOM.exportLogsBtn.addEventListener('click', exportLogs);
 DOM.importLogsBtn.addEventListener('click', () => DOM.logImportInput.click());
 DOM.logImportInput.addEventListener('change', importLogs);
-// === ⭐⭐⭐ ADD DATE RANGE LISTENERS (FIXED) ⭐⭐⭐ ===
+// ===  ADD DATE RANGE LISTENERS (FIXED)  ===
 DOM.dateRangeStart.addEventListener('change', handleFilterChange);
 DOM.dateRangeEnd.addEventListener('change', handleFilterChange);
-// === ⭐⭐⭐ ADD FILTER BAR LISTENERS (FIXED) ⭐⭐⭐ ===
+// ===  ADD FILTER BAR LISTENERS (FIXED)  ===
 DOM.filterYearSelect.addEventListener('change', handleFilterChange);
 DOM.filterMonthSelect.addEventListener('change', handleFilterChange);
 DOM.clearFilterBtn.addEventListener('click', clearFilters);
+//  NEW CHART LISTENERS (Add these) 
+DOM.tatChartType.addEventListener('change', (e) => {
+    renderCumulativeChart(e.target.value);
+});
 // ============================
 // Run this only if no recovery data was loaded
 if (!recoveryData) {
 handleAudioInput(null, true);
-toggleMode(DOM.fileType.value); // Set the initial mode based on the dropdown
+toggleMode(DOM.fileType.value);
+// Set the initial mode based on the dropdown
 }
 initNotes();
 lucide.createIcons();
+// Final call to ensure all elements are initialized
+updateDashboard();
 };
- 
 </script>
 </body>
 </html>

@@ -8,47 +8,149 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; padding: 1.5rem; }
-        /* Speaker DB Styles copied from main file CSS (Sources 48-55) */
+        
+        /* === BASE LAYOUT STYLES (MAXIMIZED) === */
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            overflow-x: hidden; 
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f7f9fb; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        /* Main Container: Takes full screen height/width and applies padding */
+        .main-container {
+            width: 100%;
+            flex-grow: 1; 
+            padding: 1.5rem; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Inner White Card: Takes up the full width/height of the main container */
+        .inner-card {
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 1rem; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #e6c795; /* yellow-600 */
+            width: 100%; 
+            flex-grow: 1; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Speaker List Area: Must be scrollable and flexible */
+        #speaker-list-wrapper {
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding-right: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        /* === 🟢 NEW/UPDATED TIMER BUTTON STYLE 🟢 === */
+        .timer-link-btn {
+            /* 3D Color & Lift */
+            background-image: linear-gradient(to right, #3b82f6, #1e40af); /* Blue Gradient */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5), 0 2px 4px -1px rgba(30, 64, 175, 0.3); /* Blue Shadow for 3D lift */
+            
+            /* Sizing & Shape */
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem; /* Slightly larger text */
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Increased gap */
+            
+            /* Transition for smooth hover effect */
+            transition: all 0.2s ease-in-out;
+            transform: translateY(0); /* Base position for 3D effect */
+        }
+
+        .timer-link-btn:hover {
+            /* Hover: Slight depression and brightness increase */
+            filter: brightness(110%);
+            box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.6), 0 3px 5px -1px rgba(30, 64, 175, 0.4);
+        }
+        
+        .timer-link-btn:active {
+            /* Active (Click) effect */
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1);
+        }
+        /* === END NEW STYLES === */
+
+        /* === INHERITED STYLES === */
         .speaker-db summary { font-size: 1.125rem; font-weight: 700; color: #ca8a04; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.5rem; }
         .speaker-db summary::-webkit-details-marker { display: none; }
         .speaker-db summary .group-icon { transition: transform 0.2s ease; color: #eab308; }
-        .speaker-item { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem; background: #fefce8; border-radius: 0.5rem; border: 1px solid #fde68a; margin-bottom: 0.25rem; }
-        .speaker-item span { font-family: monospace; font-size: 0.700rem; color: #713f12; word-break: break-all; padding-right: 1rem; }
-        .speaker-item .btn-group { display: flex; gap: 0.5rem; }
+        .speaker-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #fefce8; border-radius: 0.5rem; border: 1px solid #fde68a; margin-bottom: 0.25rem; }
+        .speaker-item span { font-family: monospace; font-size: 0.8rem; color: #713f12; word-break: break-all; padding-right: 1rem; flex-grow: 1;}
+        .speaker-item .btn-group { display: flex; gap: 0.5rem; flex-shrink: 0; }
         .speaker-btn { padding: 0.375rem; border-radius: 9999px; background: #fde68a; color: #a16207; transition: all 0.2s ease; }
         .speaker-btn:hover { background: #facc15; }
         .speaker-btn.delete-btn { background: #fee2e2; color: #dc2626; }
         .speaker-btn.delete-btn:hover { background: #fecaca; }
         .speaker-btn.edit-btn { background: #dbeafe; color: #1e40af; }
         .speaker-btn.edit-btn:hover { background: #bfdbfe; }
-        /* Speaker Message Box Styles (Sources 56-57, 342-343) */
         #speakerMessageBox { display: none; transition: opacity 0.3s ease; z-index: 10; margin-bottom: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; }
         #speakerMessageBox.hidden { display: none; }
-        /* Utility styles for buttons */
         .speaker-db-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; border-radius: 0.5rem; transition: background-color 0.2s; }
+        .bg-purple-600 { background-color: #9333ea; }
+        .hover\:bg-purple-700:hover { background-color: #7e22ce; }
+        .bg-blue-600 { background-color: #2563eb; }
+        .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+        .bg-green-600 { background-color: #16a34a; }
+        .hover\:bg-green-700:hover { background-color: #15803d; }
+        
+        @media (min-width: 1400px) {
+            .inner-card {
+                margin: 0 10%;
+            }
+        }
     </style>
 </head>
 <body>
+    
+<div class="main-container">
+    <div class="inner-card">
+        
+        <header class="pb-4 border-b border-gray-200 mb-4 flex-shrink-0 flex items-center justify-between">
+            <h1 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
+                <i data-lucide="circle-user" class="w-6 h-6 text-yellow-600"></i>
+                FD Editor Speakers Database
+            </h1>
+            
+            <a href="index.html" class="timer-link-btn">
+                <i data-lucide="timer" class="w-4 h-4"></i>
+                Go to Timer Page
+            </a>
+        </header>
 
-<div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
-    <details class="speaker-db" open>
-        <summary>
-            <i data-lucide="circle-user" class="w-5 h-5"></i>
-            SPEAKERS DATABASE
-        </summary>
-        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p class="text-sm text-gray-600 mb-4">
-                This database shares data with the main timer page.
-            </p>
+        <div class="flex-shrink-0">
             <div id="speakerMessageBox" class="p-2 bg-opacity-90 z-10 hidden transition-opacity duration-300 rounded-lg mb-2">
                 <p id="speakerMessageText" class="text-xs font-medium"></p>
             </div>
+            
             <div class="flex flex-col sm:flex-row gap-2 mb-1">
                 <button id="add-speaker-btn" class="speaker-db-btn bg-purple-600 text-white hover:bg-purple-700 flex-shrink-0 flex items-center gap-1">
                     <i data-lucide="plus" class="w-4 h-4"></i> Add a Speaker
                 </button>
                 <input type="text" id="speaker-search" placeholder="Search speakers..." class="flex-1 p-2 border border-gray-300 rounded-lg text-base focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div class="flex justify-between items-center mt-3">
+                <p class="text-xs text-gray-500">Use <strong>Import/Export (.json)</strong> to back up or move your list.</p>
                 <div class="flex flex-shrink-0 gap-2">
                     <button id="import-speaker-btn" class="speaker-db-btn bg-blue-600 text-white hover:bg-blue-700 flex-shrink-0 flex items-center gap-1">
                         <i data-lucide="upload" class="w-4 h-4"></i> Import
@@ -58,12 +160,15 @@
                     </button>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-3">Use <strong>Import/Export (.json)</strong> to back up or move your list.</p>
-        </div> 
-        <div id="speaker-list" class="space-y-2 max-h-96 overflow-y-auto pr-2">
-            </div>
+        </div>
+        
+        <div id="speaker-list-wrapper">
+            <div id="speaker-list" class="space-y-2">
+                </div>
+        </div>
         <input type="file" id="speaker-import-input" accept=".json" class="hidden">
-    </details>
+        
+    </div>
 </div>
 
 <script>
@@ -90,26 +195,29 @@
         setTimeout(()=> { DOM.speakerMessageBox.style.display = 'none'; }, 3000);
     }
     
-    // --- SPEAKER LOGIC (Copied and adapted from main file, Sources 349-373) ---
+    // --- SPEAKER LOGIC (Copied and adapted from main file) ---
     function renderSpeakers(filter = '') {
         const lowerFilter = filter.toLowerCase();
         let speakersToShow;
         let message = '';
+        
+        let filteredSpeakers = STATE.speakers.filter(s => s.toLowerCase().includes(lowerFilter));
+
         if (filter === '') {
             if (STATE.speakers.length === 0) {
-                DOM.speakerList.innerHTML = `<p class="text-sm text-gray-500 text-center italic">No speakers added yet. Use the "Add" button to build your list.</p>`;
+                DOM.speakerList.innerHTML = `<p class="text-sm text-gray-500 text-center italic py-10">No speakers added yet. Use the "Add a Speaker" button above to build your list.</p>`;
                 return;
             }
-            speakersToShow = STATE.speakers.slice(0, 20);
-            const previewCount = speakersToShow.length;
+            speakersToShow = filteredSpeakers;
             const totalSpeakers = STATE.speakers.length;
-            message = `<p class="text-sm text-gray-500 text-center italic mt-2 mb-2">Showing a preview of ${previewCount} speakers. You have ${totalSpeakers} speakers logged. Start typing to search...</p>`;
+            message = `<p class="text-sm text-gray-500 text-center italic mt-2 mb-2">Showing all ${totalSpeakers} speakers. Start typing to search...</p>`;
         } else {
-            speakersToShow = STATE.speakers.filter(s => s.toLowerCase().includes(lowerFilter));
+            speakersToShow = filteredSpeakers;
             if (speakersToShow.length === 0) {
-                DOM.speakerList.innerHTML = `<p class="text-sm text-gray-500 text-center italic">No speakers found for "${filter}".</p>`;
+                DOM.speakerList.innerHTML = `<p class="text-sm text-gray-500 text-center italic py-10">No speakers found for "${filter}".</p>`;
                 return;
             }
+            message = `<p class="text-sm text-gray-500 text-center italic mt-2 mb-2">Showing ${speakersToShow.length} results for "${filter}"...</p>`;
         }
         
         const listHtml = speakersToShow.map((speaker) => {
@@ -135,6 +243,7 @@
         lucide.createIcons();
     }
 
+    // Exported functions (remain the same)
     window.copySpeaker = (index) => {
         const speaker = STATE.speakers[index];
         navigator.clipboard.writeText(speaker).then(() => { showSpeakerMessage('Speaker copied to clipboard!', false); }, () => { showSpeakerMessage('Failed to copy.', true); });
